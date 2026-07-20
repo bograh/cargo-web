@@ -1,46 +1,49 @@
-# Astro Starter Kit: Basics
+# cargo-web
 
-```sh
-pnpm create astro@latest -- --template basics
-```
+The website for [Cargo](https://github.com/bograh/cargo) — a self-hosted
+Platform-as-a-Service (Vercel/Railway-like deployments on infrastructure you
+own). Static [Astro](https://astro.build) site with the landing page and the
+full Cargo documentation.
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
-
-## 🚀 Project Structure
-
-Inside of your Astro project, you'll see the following folders and files:
+## What's inside
 
 ```text
-/
-├── public/
-│   └── favicon.svg
-├── src
-│   ├── assets
-│   │   └── astro.svg
-│   ├── components
-│   │   └── Welcome.astro
-│   ├── layouts
-│   │   └── Layout.astro
-│   └── pages
-│       └── index.astro
-└── package.json
+src/
+├── components/         # Site nav/footer + landing sections (hero, features, terminal demo, …)
+├── content/docs/       # Documentation — 12 Markdown pages (content collection)
+├── layouts/            # Layout.astro (site shell) + DocsLayout.astro (sidebar, prose, pager)
+├── pages/              # index.astro (landing), docs/[...slug].astro, 404.astro
+├── styles/global.css   # Design tokens & utilities (dark industrial freight theme)
+└── content.config.ts   # Docs collection schema (title, description, order, section)
 ```
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
+Docs pages are plain Markdown with frontmatter:
 
-## 🧞 Commands
+```yaml
+---
+title: Installation
+description: Prerequisites and the one-command Cargo installer.
+order: 2
+section: Getting Started   # Getting Started | Core Concepts | Platform | Reference
+---
+```
 
-All commands are run from the root of the project, from a terminal:
+Add a page by dropping a new `.md` file in `src/content/docs/` — the sidebar
+and prev/next pager update automatically (sorted by `section`, then `order`).
+Callouts are styled HTML divs: `<div class="callout callout--warning">…`
+(also `--note`, `--danger`); deployment/domain states use
+`<span class="badge badge--live">` (also `--building`, `--failed`, …).
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `pnpm install`             | Installs dependencies                            |
-| `pnpm dev`             | Starts local dev server at `localhost:4321`      |
-| `pnpm build`           | Build your production site to `./dist/`          |
-| `pnpm preview`         | Preview your build locally, before deploying     |
-| `pnpm astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `pnpm astro -- --help` | Get help using the Astro CLI                     |
+Styling is hand-rolled CSS — no Tailwind, no JS frameworks. Fonts (Space
+Grotesk, JetBrains Mono) are self-hosted via Fontsource. The only client-side
+script is the install-command copy button.
 
-## 👀 Want to learn more?
+## Commands
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+| Command | Action |
+| :------ | :----- |
+| `pnpm install` | Install dependencies |
+| `pnpm dev` | Start the dev server at `localhost:4321` |
+| `pnpm astro dev --background` | Start the dev server in the background (see AGENTS.md) |
+| `pnpm build` | Build the production site to `./dist/` |
+| `pnpm preview` | Preview the production build locally |
