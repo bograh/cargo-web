@@ -1,0 +1,104 @@
+---
+
+---
+
+<section class="term-section">
+  <div class="wrap">
+    <span class="chip">Install</span>
+    <h2 class="section-title">One script. Ten minutes.</h2>
+    <div class="hazard" aria-hidden="true"></div>
+
+    <div class="term" role="img" aria-label="Terminal session showing the Cargo installer">
+      <div class="term__chrome">
+        <span class="term__dot term__dot--red"></span>
+        <span class="term__dot term__dot--amber"></span>
+        <span class="term__dot term__dot--green"></span>
+        <span class="term__title">deploy/ — bash</span>
+      </div>
+      <pre class="term__body"><code><span class="t-prompt">$</span> ./install.sh
+<span class="t-go">==&gt;</span> Platform domain: <span class="t-input">cargo.example.com</span>
+<span class="t-go">==&gt;</span> Apps domain suffix: <span class="t-input">apps.example.com</span>
+<span class="t-go">==&gt;</span> Email for Let's Encrypt certificates: <span class="t-input">ops@example.com</span>
+<span class="t-go">==&gt;</span> DNS provider for wildcard certs (empty = per-domain HTTP-01):
+<span class="t-go">==&gt;</span> wrote .env (mode 0600)
+
+  <span class="t-warn">BACK UP CARGO_MASTER_KEY FROM .env SOMEWHERE SAFE.</span>
+
+<span class="t-go">==&gt;</span> starting Cargo…
+<span class="t-ok">[+] Running 3/3  ✔ traefik  ✔ controlplane  ✔ db</span>
+<span class="t-go">==&gt;</span> done. Open <span class="t-url">https://cargo.example.com</span> and register —
+    the first account becomes the instance admin.</code></pre>
+    </div>
+  </div>
+</section>
+
+<style>
+  .term-section {
+    padding-block: clamp(3.5rem, 8vw, 6rem);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .section-title {
+    font-size: clamp(1.6rem, 3.4vw, 2.3rem);
+    letter-spacing: -0.02em;
+    margin-top: 1rem;
+  }
+
+  .hazard {
+    margin-top: 1.1rem;
+  }
+
+  .term {
+    margin-top: 2.5rem;
+    max-width: 46rem;
+    background: #0d0f12;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.7);
+  }
+
+  .term__chrome {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0.7rem 1rem;
+    background: var(--raised);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .term__dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+  }
+
+  .term__dot--red { background: #e5484d; }
+  .term__dot--amber { background: var(--amber); }
+  .term__dot--green { background: var(--green); }
+
+  .term__title {
+    margin-left: 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  .term__body {
+    margin: 0;
+    padding: 1.25rem 1.4rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    line-height: 1.7;
+    overflow-x: auto;
+    color: var(--text);
+  }
+
+  .t-prompt { color: var(--amber); font-weight: 700; }
+  .t-go { color: #58a6ff; font-weight: 700; }
+  .t-input { color: var(--green); }
+  .t-warn { color: var(--amber); font-weight: 700; }
+  .t-ok { color: var(--green); }
+  .t-url { color: #58a6ff; text-decoration: underline; }
+</style>
