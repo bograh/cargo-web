@@ -1,0 +1,52 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="404 — Cargo">
+  <section class="lost corrugated">
+    <div class="wrap lost__inner">
+      <span class="chip">Lost container</span>
+      <h1 class="lost__title">404 — this crate never arrived.</h1>
+      <p class="lost__sub">
+        The page you're looking for isn't on this manifest. It may have been
+        rerouted, or it never shipped.
+      </p>
+      <div class="lost__actions">
+        <a href="/" class="btn btn--primary">Back to port</a>
+        <a href="/docs/" class="btn btn--ghost">Check the docs</a>
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .lost {
+    position: relative;
+  }
+
+  .lost__inner {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.4rem;
+    padding-block: clamp(5rem, 12vw, 9rem);
+  }
+
+  .lost__title {
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    letter-spacing: -0.025em;
+  }
+
+  .lost__sub {
+    color: var(--muted);
+    max-width: 48ch;
+    font-size: 1.05rem;
+  }
+
+  .lost__actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+  }
+</style>
