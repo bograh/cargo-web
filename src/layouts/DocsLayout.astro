@@ -1,0 +1,466 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from './Layout.astro';
+
+type DocEntry = Awaited<ReturnType<typeof getCollection<'docs'>>>[number];
+
+interface Props {
+  entry: DocEntry;
+}
+
+const SECTION_ORDER = ['Getting Started', 'Core Concepts', 'Platform', 'Reference'];
+
+const { entry } = Astro.props;
+
+const all = await getCollection('docs');
+const sorted = all.sort(
+  (a, b) =>
+    SECTION_ORDER.indexOf(a.data.section) - SECTION_ORDER.indexOf(b.data.section) ||
+    a.data.order - b.data.order,
+);
+const hrefFor = (id: string) => (id === 'introduction' ? '/docs/' : `/docs/${id}/`);
+const idx = sorted.findIndex((e) => e.id === entry.id);
+const prev = idx > 0 ? sorted[idx - 1] : undefined;
+const next = idx < sorted.length - 1 ? sorted[idx + 1] : undefined;
+const groups = SECTION_ORDER.map((name) => ({
+  name,
+  items: sorted.filter((e) => e.data.section === name),
+}));
+---
+
+<Layout title={`${entry.data.title} — Cargo Docs`} description={entry.data.description}>
+  <div class="docs-shell wrap">
+    <aside class="docs-sidebar">
+      {groups.map((g) => (
+        <nav class="docs-group" aria-label={g.name}>
+          <h2 class="docs-group__name">{g.name}</h2>
+          <ul class="docs-group__list">
+            {g.items.map((e) => (
+              <li>
+                <a
+                  href={hrefFor(e.id)}
+                  class:list={['docs-link', { 'docs-link--active': e.id === entry.id }]}
+                  aria-current={e.id === entry.id ? 'page' : undefined}
+                >
+                  {e.data.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      ))}
+    </aside>
+
+    <article class="prose">
+      <h1>{entry.data.title}</h1>
+      <slot />
+
+      <nav class="pager" aria-label="Pagination">
+        {prev ? (
+          <a href={hrefFor(prev.id)} class="pager__link pager__link--prev">
+            <span class="pager__dir">← Previous</span>
+            <span class="pager__title">{prev.data.title}</span>
+          </a>
+        ) : <span />}
+        {next && (
+          <a href={hrefFor(next.id)} class="pager__link pager__link--next">
+            <span class="pager__dir">Next →</span>
+            <span class="pager__title">{next.data.title}</span>
+          </a>
+        )}
+      </nav>
+    </article>
+  </div>
+</Layout>
+
+<style is:global>
+  /* ---------- docs shell ---------- */
+
+  .docs-shell {
+    display: grid;
+    grid-template-columns: 15rem minmax(0, 1fr);
+    gap: 3rem;
+    padding-block: 2.5rem;
+  }
+
+  .docs-sidebar {
+    position: sticky;
+    top: 5.5rem;
+    align-self: start;
+    max-height: calc(100vh - 7rem);
+    overflow-y: auto;
+    padding-right: 0.5rem;
+  }
+
+  .docs-group + .docs-group {
+    margin-top: 1.6rem;
+  }
+
+  .docs-group__name {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.55rem;
+  }
+
+  .docs-group__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .docs-link {
+    display: block;
+    padding: 0.32rem 0.7rem;
+    border-left: 2px solid transparent;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.92rem;
+    border-radius: 0 6px 6px 0;
+    transition: color 140ms ease, border-color 140ms ease, background-color 140ms ease;
+  }
+
+  .docs-link:hover {
+    color: var(--text);
+    background: var(--surface);
+  }
+
+  .docs-link--active {
+    color: var(--amber);
+    border-left-color: var(--amber);
+    background: color-mix(in srgb, var(--amber) 7%, transparent);
+  }
+
+  /* ---------- prose ---------- */
+
+  .prose {
+    max-width: 46rem;
+    min-width: 0;
+  }
+
+  .prose > h1 {
+    font-size: clamp(1.9rem, 4vw, 2.5rem);
+    letter-spacing: -0.02em;
+    padding-bottom: 0.9rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.6rem;
+  }
+
+  .prose h2 {
+    font-size: 1.45rem;
+    margin: 2.6rem 0 0.9rem;
+    scroll-margin-top: 5rem;
+  }
+
+  .prose h3 {
+    font-size: 1.12rem;
+    margin: 2rem 0 0.7rem;
+    scroll-margin-top: 5rem;
+  }
+
+  .prose p {
+    margin: 0 0 1rem;
+    color: color-mix(in srgb, var(--text) 88%, var(--muted));
+  }
+
+  .prose a {
+    color: var(--amber);
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, var(--amber) 40%, transparent);
+    text-underline-offset: 3px;
+    transition: text-decoration-color 140ms ease;
+  }
+
+  .prose a:hover {
+    text-decoration-color: var(--amber);
+  }
+
+  .prose ul,
+  .prose ol {
+    margin: 0 0 1.1rem;
+    padding-left: 1.4rem;
+    color: color-mix(in srgb, var(--text) 88%, var(--muted));
+  }
+
+  .prose li {
+    margin-bottom: 0.35rem;
+  }
+
+  .prose li::marker {
+    color: var(--amber);
+  }
+
+  .prose strong {
+    color: var(--text);
+  }
+
+  .prose hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 2.2rem 0;
+  }
+
+  /* inline code */
+  .prose :not(pre) > code {
+    background: var(--raised);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 0.12em 0.38em;
+    font-size: 0.86em;
+    color: var(--amber);
+  }
+
+  /* code blocks (Shiki output) */
+  .prose pre.astro-code {
+    background: #0d0f12 !important;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.2rem;
+    font-size: 0.86rem;
+    line-height: 1.7;
+    overflow-x: auto;
+    margin: 0 0 1.2rem;
+  }
+
+  /* manifest tables */
+  .prose table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 0 1.4rem;
+    font-size: 0.9rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    display: block;
+    overflow-x: auto;
+  }
+
+  .prose thead {
+    background: var(--raised);
+  }
+
+  .prose th {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: left;
+    padding: 0.65rem 0.9rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .prose td {
+    padding: 0.6rem 0.9rem;
+    border-bottom: 1px solid var(--border);
+    color: color-mix(in srgb, var(--text) 88%, var(--muted));
+    vertical-align: top;
+  }
+
+  .prose tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .prose tbody tr:hover {
+    background: color-mix(in srgb, var(--surface) 70%, transparent);
+  }
+
+  .prose blockquote {
+    margin: 0 0 1.2rem;
+    padding: 0.8rem 1.1rem;
+    border-left: 3px solid var(--amber);
+    background: color-mix(in srgb, var(--amber) 6%, transparent);
+    border-radius: 0 var(--radius) var(--radius) 0;
+  }
+
+  .prose blockquote p {
+    margin: 0;
+  }
+
+  /* ---------- callouts (raw-HTML divs inside markdown) ---------- */
+
+  .prose .callout {
+    margin: 0 0 1.2rem;
+    padding: 0.85rem 1.1rem;
+    border: 1px solid var(--border);
+    border-left-width: 3px;
+    border-radius: var(--radius);
+    background: var(--surface);
+    font-size: 0.93rem;
+  }
+
+  .prose .callout p {
+    margin: 0;
+  }
+
+  .prose .callout--note {
+    border-left-color: var(--amber);
+    background: color-mix(in srgb, var(--amber) 6%, var(--surface));
+  }
+
+  .prose .callout--warning {
+    border-left-color: var(--amber);
+    background:
+      repeating-linear-gradient(45deg, transparent 0 14px, rgba(245, 165, 36, 0.04) 14px 28px),
+      var(--surface);
+  }
+
+  .prose .callout--danger {
+    border-left-color: var(--danger);
+    background: color-mix(in srgb, var(--danger) 7%, var(--surface));
+  }
+
+  .prose .callout__title {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 0.3rem;
+  }
+
+  .prose .callout--note .callout__title { color: var(--amber); }
+  .prose .callout--warning .callout__title { color: var(--amber); }
+  .prose .callout--danger .callout__title { color: var(--danger); }
+
+  /* ---------- status badges (freight tags) ---------- */
+
+  .prose .badge {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    padding: 0.14rem 0.55rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    vertical-align: middle;
+  }
+
+  .prose .badge--live {
+    color: var(--green);
+    border-color: color-mix(in srgb, var(--green) 45%, transparent);
+    background: color-mix(in srgb, var(--green) 8%, transparent);
+  }
+
+  .prose .badge--building,
+  .prose .badge--deploying,
+  .prose .badge--pending {
+    color: var(--amber);
+    border-color: color-mix(in srgb, var(--amber) 45%, transparent);
+    background: color-mix(in srgb, var(--amber) 8%, transparent);
+  }
+
+  .prose .badge--failed,
+  .prose .badge--misconfigured {
+    color: var(--danger);
+    border-color: color-mix(in srgb, var(--danger) 45%, transparent);
+    background: color-mix(in srgb, var(--danger) 8%, transparent);
+  }
+
+  /* ---------- pager ---------- */
+
+  .pager {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .pager__link {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.8rem 1.1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    text-decoration: none;
+    min-width: 11rem;
+    transition: border-color 140ms ease;
+  }
+
+  .pager__link:hover {
+    border-color: color-mix(in srgb, var(--amber) 50%, var(--border));
+  }
+
+  .pager__link--next {
+    text-align: right;
+    margin-left: auto;
+  }
+
+  .pager__dir {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .pager__title {
+    color: var(--amber);
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+
+  /* ---------- mobile ---------- */
+
+  @media (max-width: 900px) {
+    .docs-shell {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+
+    .docs-sidebar {
+      position: static;
+      max-height: none;
+      display: flex;
+      gap: 1.5rem;
+      overflow-x: auto;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .docs-group {
+      flex-shrink: 0;
+    }
+
+    .docs-group + .docs-group {
+      margin-top: 0;
+    }
+
+    .docs-group__list {
+      flex-direction: row;
+      gap: 0.4rem;
+    }
+
+    .docs-link {
+      border-left: none;
+      border-bottom: 2px solid transparent;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+
+    .docs-link--active {
+      border-bottom-color: var(--amber);
+    }
+
+    .pager {
+      flex-direction: column;
+    }
+
+    .pager__link--next {
+      text-align: left;
+    }
+  }
+</style>
