@@ -1,0 +1,181 @@
+/* ==========================================================================
+   Cargo — design tokens & base
+   Dark industrial freight theme. All motifs are pure CSS (no images).
+   ========================================================================== */
+
+:root {
+  /* palette */
+  --bg: #0b0c0e;
+  --surface: #121316;
+  --raised: #17181c;
+  --border: #23252b;
+  --text: #e8e9eb;
+  --muted: #9aa0a8;
+  --amber: #f5a524;
+  --amber-deep: #c47f12;
+  --green: #3fb950;
+  --danger: #e5484d;
+
+  /* type */
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --radius: 10px;
+}
+
+/* ---------- reset / base ---------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+}
+
+code,
+pre,
+kbd {
+  font-family: var(--font-mono);
+}
+
+img,
+svg {
+  display: block;
+}
+
+::selection {
+  background: rgba(245, 165, 36, 0.28);
+}
+
+:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ---------- utilities ---------- */
+
+.wrap {
+  max-width: 72rem;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.2rem;
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn--primary {
+  background: var(--amber);
+  color: #14100a;
+}
+
+.btn--primary:hover {
+  background: var(--amber-deep);
+  color: #0e0a04;
+}
+
+.btn--ghost {
+  border-color: var(--border);
+  color: var(--text);
+  background: transparent;
+}
+
+.btn--ghost:hover {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+
+/* Shipping-label chip: uppercase mono, dashed border */
+.chip {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border: 1px dashed color-mix(in srgb, var(--amber) 60%, transparent);
+  color: var(--amber);
+  padding: 0.3rem 0.7rem;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--amber) 6%, transparent);
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+/* Hazard stripe rule */
+.hazard {
+  height: 6px;
+  width: 72px;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--amber) 0 12px,
+    transparent 12px 24px
+  );
+  border-radius: 2px;
+}
+
+/* Corrugated container ribs (apply over a background) */
+.corrugated {
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.025) 0 2px,
+    transparent 2px 14px
+  );
+}
