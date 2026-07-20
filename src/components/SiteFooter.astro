@@ -1,0 +1,107 @@
+---
+
+---
+
+<footer class="footer">
+  <div class="wrap footer__inner">
+    <div class="footer__brand">
+      <span class="footer__wordmark">Cargo</span>
+      <p class="footer__tagline">
+        Self-hosted PaaS. Three containers, zero YAML.
+      </p>
+    </div>
+
+    <nav class="footer__col" aria-label="Docs">
+      <h2 class="footer__heading">Docs</h2>
+      <a href="/docs/installation/" class="footer__link">Installation</a>
+      <a href="/docs/quickstart/" class="footer__link">Quickstart</a>
+      <a href="/docs/architecture/" class="footer__link">Architecture</a>
+    </nav>
+
+    <nav class="footer__col" aria-label="Project">
+      <h2 class="footer__heading">Project</h2>
+      <a href="https://github.com/bograh/cargo" class="footer__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+      <a href="https://github.com/bograh/cargo/blob/main/PRD.md" class="footer__link" target="_blank" rel="noopener noreferrer">PRD</a>
+      <a href="https://github.com/bograh/cargo/blob/main/PhasedPlans.md" class="footer__link" target="_blank" rel="noopener noreferrer">Roadmap</a>
+    </nav>
+  </div>
+
+  <div class="wrap footer__bottom">
+    <p>Built with Go, Postgres, and Traefik — served as a static site.</p>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    border-top: 1px solid var(--border);
+    margin-top: 5rem;
+    background: var(--surface);
+  }
+
+  .footer__inner {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 3rem;
+    padding-block: 3rem 2rem;
+  }
+
+  .footer__wordmark {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.15rem;
+    letter-spacing: -0.02em;
+  }
+
+  .footer__tagline {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-top: 0.4rem;
+  }
+
+  .footer__col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  .footer__heading {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.4rem;
+  }
+
+  .footer__link {
+    color: var(--text);
+    text-decoration: none;
+    font-size: 0.92rem;
+    opacity: 0.85;
+    transition: opacity 160ms ease, color 160ms ease;
+  }
+
+  .footer__link:hover {
+    opacity: 1;
+    color: var(--amber);
+  }
+
+  .footer__bottom {
+    padding-block: 1.25rem 2rem;
+    color: var(--muted);
+    font-size: 0.82rem;
+    font-family: var(--font-mono);
+  }
+
+  @media (max-width: 720px) {
+    .footer__inner {
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+
+    .footer__brand {
+      grid-column: 1 / -1;
+    }
+  }
+</style>

@@ -1,0 +1,114 @@
+---
+const currentPath = Astro.url.pathname;
+const isDocs = currentPath.startsWith('/docs');
+---
+
+<header class="nav">
+  <div class="wrap nav__inner">
+    <a href="/" class="nav__brand" aria-label="Cargo home">
+      <svg
+        class="nav__logo"
+        viewBox="0 0 32 32"
+        width="26"
+        height="26"
+        aria-hidden="true"
+      >
+        <rect x="3" y="8" width="26" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2.4"></rect>
+        <path d="M8 8v16M13 8v16M18 8v16M23 8v16" stroke="currentColor" stroke-width="1.6"></path>
+      </svg>
+      <span class="nav__wordmark">Cargo</span>
+    </a>
+
+    <nav class="nav__links" aria-label="Primary">
+      <a href="/docs/" class:list={['nav__link', { 'nav__link--active': isDocs }]}>Docs</a>
+      <a
+        href="https://github.com/bograh/cargo"
+        class="nav__link"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        GitHub
+        <svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true">
+          <path d="M4 12L12 4M6 4h6v6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+      </a>
+      <a href="/docs/installation/" class="btn btn--primary nav__cta">Get started</a>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    height: 3.75rem;
+  }
+
+  .nav__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    text-decoration: none;
+    color: var(--text);
+  }
+
+  .nav__logo {
+    color: var(--amber);
+  }
+
+  .nav__wordmark {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.2rem;
+    letter-spacing: -0.02em;
+  }
+
+  .nav__links {
+    display: flex;
+    align-items: center;
+    gap: 1.4rem;
+  }
+
+  .nav__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    text-decoration: none;
+    color: var(--muted);
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: color 160ms ease;
+  }
+
+  .nav__link:hover,
+  .nav__link--active {
+    color: var(--text);
+  }
+
+  .nav__cta {
+    padding: 0.45rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  @media (max-width: 560px) {
+    .nav__links {
+      gap: 1rem;
+    }
+
+    .nav__cta {
+      display: none;
+    }
+  }
+</style>
