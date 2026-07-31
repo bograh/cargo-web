@@ -27,6 +27,16 @@ container at deploy time.
 
 ## Attached databases
 
-Attaching a managed database injects its connection variable automatically —
-`DATABASE_URL` for Postgres, `REDIS_URL` for Redis — with per-app isolated
-credentials. See [Managed databases](/docs/databases/).
+Attaching a managed database injects its connection variable automatically,
+with per-app isolated credentials:
+
+| Engine | Injected variable |
+|---|---|
+| Postgres | `DATABASE_URL` |
+| MySQL | `MYSQL_URL` |
+| MongoDB | `MONGODB_URL` |
+| Redis | `REDIS_URL` |
+
+The keys are distinct per engine, so one app can attach one of each without
+collisions. Attaching fails if the app already defines that key itself. See
+[Managed databases](/docs/databases/).

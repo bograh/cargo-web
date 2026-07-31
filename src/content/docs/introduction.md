@@ -13,17 +13,25 @@ URL in a few clicks — no SSH, no YAML, no proxy config.
 
 ## What you get
 
-- **Apps deploy from GitHub repos** (Dockerfile or Nixpacks auto-detected) or
-  plain registry images
+- **Apps deploy from GitHub repos** — your Dockerfile, a generated
+  multi-stage Dockerfile for Node/Go/Java, or Nixpacks — or plain registry
+  images
 - **Every app gets `https://<app>.<apps-domain>`** with automatic SSL; custom
   domains supported
-- **Live build/deploy logs**, encrypted environment variables, one-click
-  rollback
-- **Organizations with roles** (owner/admin/member/viewer) and shareable
-  invite links
-- **Push-to-deploy webhooks** via a GitHub App
-- **Managed databases** — Postgres 16/17 and Redis 7 provisioned per
+- **Live build/deploy logs**, streaming container logs, encrypted environment
+  variables, one-click rollback
+- **Live metrics per app** — CPU, memory, request rate, error rate, p50/p95
+  latency
+- **Organizations with roles** (owner/admin/member/viewer), email invites, and
+  shareable invite links
+- **Push-to-deploy webhooks** via a GitHub App you can create in one click
+- **Managed databases** — Postgres, MySQL, MongoDB, and Redis provisioned per
   organization
+- **Production safeguards** — scheduled control-plane backups, disk guardrail,
+  deploy/disk/backup alerts, per-app resource caps, and an audit log
+
+No domain yet? Cargo installs on localhost or a bare server IP and works the
+same, minus Let's Encrypt certificates.
 
 ## Architecture at a glance
 
@@ -32,7 +40,7 @@ Exactly three platform containers (plus one per deployed app):
 | Container | Role |
 |---|---|
 | `controlplane` | Single Go binary: API, embedded React UI, job queue, deploy engine. The only stateful piece besides the DB. |
-| `db` | Postgres 16 — all platform state, job queue, and migrations (run automatically at startup). |
+| `db` | Postgres 16 — all platform state, job queue, and migrations (run automatically at startup). Sits on a private network no deployed app can reach. |
 | `traefik` | Reverse proxy; the only container publishing host ports (80/443). Issues certs via Let's Encrypt. |
 
 ## Who it's for
@@ -46,4 +54,5 @@ inspect, back up, and upgrade with `docker compose pull`.
 
 - [Installation](/docs/installation/) — prerequisites and the one-command installer
 - [Quickstart](/docs/quickstart/) — from first login to a live app
+- [Operations & Hardening](/docs/operations/) — backups, alerts, and the audit log
 - [Architecture](/docs/architecture/) — the platform in detail

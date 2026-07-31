@@ -10,7 +10,7 @@ full Cargo documentation.
 ```text
 src/
 ├── components/         # Site nav/footer + landing sections (hero, features, terminal demo, …)
-├── content/docs/       # Documentation — 12 Markdown pages (content collection)
+├── content/docs/       # Documentation — 15 Markdown pages (content collection)
 ├── layouts/            # Layout.astro (site shell) + DocsLayout.astro (sidebar, prose, pager)
 ├── pages/              # index.astro (landing), docs/[...slug].astro, 404.astro
 ├── styles/global.css   # Design tokens & utilities (dark industrial freight theme)
