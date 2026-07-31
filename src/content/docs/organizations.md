@@ -1,7 +1,7 @@
 ---
 title: Organizations & Teams
-description: Roles, invite links, and multi-org membership.
-order: 9
+description: Roles, email and link invites, and multi-org membership.
+order: 10
 section: Platform
 ---
 
@@ -24,9 +24,17 @@ Two safety rules around ownership:
 - Only the **owner** can delete an organization
 - The **last owner** can't be demoted or removed
 
-## Invite links
+## Invites
 
-Invite teammates with **shareable links** — no SMTP required:
+Invite teammates two ways, from **Members → Invite people**:
+
+- **By email** — paste one or more addresses, pick a role, and Cargo emails
+  each of them a branded invitation naming the org and who invited them.
+  Requires [SMTP](/docs/administration/) to be configured on the instance.
+- **By link** — create a shareable link instead, and pass it along however
+  you like. No SMTP required.
+
+Either way:
 
 - Each invite has a chosen **role** and **expiry**, and is **revocable**
 - The token is **shown once** at creation and stored hashed
@@ -34,6 +42,27 @@ Invite teammates with **shareable links** — no SMTP required:
   re-accepting is a no-op
 - Revoked, expired, or bogus tokens are rejected
 - Only owner/admin can create, list, and revoke invites
+
+### Accepting an invite
+
+An invite link opens a **public preview page** — no sign-in needed to see
+which organization you've been invited to and with what role. From there:
+
+- **Already signed in?** The invite is accepted immediately and you land in
+  the org.
+- **New to this Cargo instance?** Register right on the page (the address is
+  prefilled for email invites) and membership is granted as soon as the
+  account exists — no separate sign-up detour.
+
+Expired or revoked tokens show a plain "invalid or expired" message rather
+than leaking anything about the org.
+
+## Audit log
+
+Org owners and admins can review every state-changing action taken in their
+organization — who did what, to which resource, and when. Entries are
+append-only and retained for 180 days by default. See
+[Operations & Hardening](/docs/operations/).
 
 ## Isolation
 

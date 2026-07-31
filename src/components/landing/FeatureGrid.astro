@@ -6,8 +6,8 @@ const features = [
     icon: 'M2 8h9M8 4l4 4-4 4M14 2v12',
   },
   {
-    title: 'Dockerfile or Nixpacks',
-    body: 'Builder auto-detected: your Dockerfile if present, Nixpacks otherwise. Custom context, Dockerfile path, and build args supported.',
+    title: 'Bring a Dockerfile or don’t',
+    body: 'Builder auto-detected: your Dockerfile, a generated multi-stage image for Node/Go/Java, or Nixpacks. Custom context, Dockerfile path, and build args supported.',
     icon: 'M2 6h12v8H2zM5 6v8M8 6v8M11 6v8',
   },
   {
@@ -16,8 +16,8 @@ const features = [
     icon: 'M8 2a4 4 0 0 1 4 4v2h1a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1h1V6a4 4 0 0 1 4-4zM6 8h4V6a2 2 0 1 0-4 0v2z',
   },
   {
-    title: 'Live build & deploy logs',
-    body: 'Streamed live over SSE and retained per deployment.',
+    title: 'Live logs & metrics',
+    body: 'Build and container logs streamed over SSE, plus CPU, memory, request rate, and p50/p95 latency charts per app.',
     icon: 'M2 3h12v10H2zM4 6l3 2-3 2M8 10h4',
   },
   {
@@ -32,13 +32,18 @@ const features = [
   },
   {
     title: 'Managed databases',
-    body: 'Provision Postgres 16/17 and Redis 7 per org; attaching injects DATABASE_URL or REDIS_URL.',
+    body: 'Provision Postgres, MySQL, MongoDB, or Redis per org; attaching injects the connection URL with per-app credentials.',
     icon: 'M8 2c3 0 5 .8 5 2s-2 2-5 2-5-.8-5-2 2-2 5-2zM3 4v8c0 1.2 2 2 5 2s5-.8 5-2V4M3 8c0 1.2 2 2 5 2s5-.8 5-2',
   },
   {
     title: 'Teams & roles',
-    body: 'Organizations with owner/admin/member/viewer roles and shareable invite links.',
+    body: 'Organizations with owner/admin/member/viewer roles, email invites, and shareable links.',
     icon: 'M6 7a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM1.5 14c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4M11 7a2 2 0 1 0-.8-3.8M12.5 10c1.6.4 2.5 1.6 2.5 3.4',
+  },
+  {
+    title: 'Runs unattended',
+    body: 'Daily control-plane backups, a disk guardrail, deploy/disk/backup alerts, per-app resource caps, and an append-only audit log.',
+    icon: 'M8 1.5l5.5 2.2v4.1c0 3.5-2.3 5.9-5.5 7.2-3.2-1.3-5.5-3.7-5.5-7.2V3.7L8 1.5zM8 5.5v3.2M8 10.8v.1',
   },
 ];
 ---
