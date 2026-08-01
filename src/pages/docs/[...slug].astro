@@ -2,6 +2,8 @@
 import { getCollection, render } from 'astro:content';
 import DocsLayout from '../../layouts/DocsLayout.astro';
 
+export const prerender = true;
+
 export async function getStaticPaths() {
   const docs = await getCollection('docs');
   const paths: { params: { slug: string | undefined }; props: { entry: (typeof docs)[number] } }[] =
