@@ -3,9 +3,7 @@ interface Props {
   command?: string;
 }
 
-const defaultCommand = `git clone https://github.com/bograh/cargo.git
-cd cargo/deploy
-./install.sh`;
+const defaultCommand = 'curl -fsSL https://usecargo.vercel.app/install.sh | sh';
 const { command = defaultCommand } = Astro.props;
 ---
 

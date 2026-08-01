@@ -11,7 +11,8 @@ three-container stack.
 
 ## Prerequisites
 
-- A Linux host with **Docker Engine** and the **compose plugin**
+- An Ubuntu/Debian Linux host with `sudo` access (the installer sets up Docker
+  Engine and the compose plugin)
 - Ports **80** and **443** open
 - For a **production install**, DNS records pointing at the host:
   - `<platform-domain>` → server IP (where the Cargo UI lives, e.g. `cargo.example.com`)
@@ -23,13 +24,13 @@ up a **local install** on localhost / the server's IP — see below.
 ## Quick install
 
 ```bash
-git clone https://github.com/bograh/cargo.git
-cd cargo/deploy
-./install.sh
+curl -fsSL https://usecargo.vercel.app/install.sh | sh
 ```
 
-This clones Cargo into a new `cargo` directory. If you already have a Cargo
-checkout, start from its `deploy` directory instead.
+The bootstrap installs any missing prerequisites, clones Cargo to `/opt/cargo`,
+then runs the deploy installer. Set `CARGO_INSTALL_DIR` to choose a different
+location. If you already have a Cargo checkout, run `./deploy/install.sh` from
+its root instead.
 
 The installer runs four phases, in order:
 
