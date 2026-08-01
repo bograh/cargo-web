@@ -367,6 +367,138 @@ const groups = SECTION_ORDER.map((name) => ({
     background: color-mix(in srgb, var(--danger) 8%, transparent);
   }
 
+  /* ---------- diagrams (inline SVG in markdown) ---------- */
+
+  .prose .diagram {
+    margin: 0 0 1.6rem;
+    padding: 1.15rem 1.15rem 0.95rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background-color: var(--surface);
+    background-image: repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.02) 0 2px,
+      transparent 2px 14px
+    );
+    overflow-x: auto;
+  }
+
+  .prose .diagram svg {
+    width: 100%;
+    min-width: 30rem;
+    height: auto;
+  }
+
+  .prose .diagram figcaption {
+    margin-top: 0.9rem;
+    padding-top: 0.75rem;
+    border-top: 1px dashed var(--border);
+    font-size: 0.83rem;
+    line-height: 1.55;
+    color: var(--muted);
+  }
+
+  /* svg primitives */
+
+  .d-node {
+    fill: var(--raised);
+    stroke: var(--border);
+  }
+
+  .d-node--accent {
+    fill: color-mix(in srgb, var(--amber) 10%, var(--raised));
+    stroke: color-mix(in srgb, var(--amber) 55%, transparent);
+  }
+
+  .d-node--live {
+    fill: color-mix(in srgb, var(--green) 10%, var(--raised));
+    stroke: color-mix(in srgb, var(--green) 50%, transparent);
+  }
+
+  .d-node--fail {
+    fill: color-mix(in srgb, var(--danger) 10%, var(--raised));
+    stroke: color-mix(in srgb, var(--danger) 50%, transparent);
+  }
+
+  /* external / out-of-platform boxes */
+  .d-node--ext {
+    fill: transparent;
+    stroke: var(--border);
+    stroke-dasharray: 4 4;
+  }
+
+  /* docker network lane */
+  .d-lane {
+    fill: color-mix(in srgb, var(--amber) 3%, transparent);
+    stroke: color-mix(in srgb, var(--amber) 26%, transparent);
+    stroke-dasharray: 6 5;
+  }
+
+  .d-title {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 600;
+    fill: var(--text);
+  }
+
+  .d-sub {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    fill: var(--muted);
+  }
+
+  /* uppercase mono lane/section tag */
+  .d-tag {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    fill: var(--muted);
+  }
+
+  .d-edge {
+    fill: none;
+    stroke: color-mix(in srgb, var(--muted) 75%, transparent);
+    stroke-width: 1.5;
+  }
+
+  .d-edge--dashed {
+    stroke-dasharray: 5 4;
+  }
+
+  .d-edge--deny {
+    stroke: var(--danger);
+    stroke-width: 1.5;
+    stroke-dasharray: 4 4;
+    fill: none;
+    opacity: 0.75;
+  }
+
+  .d-arrow {
+    fill: color-mix(in srgb, var(--muted) 75%, transparent);
+    stroke: none;
+  }
+
+  .d-edge-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    fill: var(--muted);
+  }
+
+  .d-deny-badge {
+    fill: var(--surface);
+    stroke: color-mix(in srgb, var(--danger) 60%, transparent);
+  }
+
+  .d-deny-x {
+    fill: none;
+    stroke: var(--danger);
+    stroke-width: 1.6;
+  }
+
+  .d-edge-label--deny {
+    fill: var(--danger);
+  }
+
   /* ---------- pager ---------- */
 
   .pager {

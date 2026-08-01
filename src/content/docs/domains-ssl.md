@@ -73,5 +73,43 @@ file for you; a provider credential variable still needs to be added to
 
 Traefik is the only container publishing host ports (80/443) and is
 configured entirely via container labels on the shared `cargo-proxy` network
-— apps register and deregister routes as they deploy. See
+— apps register and deregister routes as they deploy.
+
+<figure class="diagram">
+<svg viewBox="0 0 720 240" role="img" aria-label="Request path: a browser hits Traefik on port 443, which terminates TLS and routes by hostname to either an app container on cargo-proxy or the controlplane on port 8080. Traefik obtains certificates from Let's Encrypt over ACME using HTTP-01 or DNS-01.">
+  <defs>
+    <marker id="d-arrow-routing" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path class="d-arrow" d="M0,0 L10,5 L0,10 z"/></marker>
+  </defs>
+  <rect class="d-node--ext" x="250" y="8" width="200" height="48" rx="8"/>
+  <text class="d-title" x="350" y="32" text-anchor="middle">Let's Encrypt</text>
+  <text class="d-sub" x="350" y="48" text-anchor="middle">ACME · HTTP-01 / DNS-01</text>
+  <rect class="d-node" x="16" y="104" width="170" height="56" rx="8"/>
+  <text class="d-title" x="101" y="130" text-anchor="middle">browser</text>
+  <text class="d-sub" x="101" y="148" text-anchor="middle">https://app.example.com</text>
+  <rect class="d-node--accent" x="250" y="92" width="200" height="76" rx="8"/>
+  <text class="d-title" x="350" y="122" text-anchor="middle">traefik</text>
+  <text class="d-sub" x="350" y="142" text-anchor="middle">:80 / :443 · TLS termination</text>
+  <text class="d-sub" x="350" y="158" text-anchor="middle">docker provider · labels</text>
+  <path class="d-edge" d="M186,130 H246" marker-end="url(#d-arrow-routing)"/>
+  <text class="d-edge-label" x="216" y="122" text-anchor="middle">443</text>
+  <path class="d-edge d-edge--dashed" d="M350,92 V60" marker-start="url(#d-arrow-routing)" marker-end="url(#d-arrow-routing)"/>
+  <text class="d-edge-label" x="342" y="78" text-anchor="end">cert issuance + renewal</text>
+  <rect class="d-node" x="520" y="40" width="184" height="64" rx="8"/>
+  <text class="d-title" x="612" y="68" text-anchor="middle">app container</text>
+  <text class="d-sub" x="612" y="88" text-anchor="middle">app port on cargo-proxy</text>
+  <rect class="d-node" x="520" y="156" width="184" height="64" rx="8"/>
+  <text class="d-title" x="612" y="184" text-anchor="middle">controlplane</text>
+  <text class="d-sub" x="612" y="204" text-anchor="middle">platform UI + API</text>
+  <path class="d-edge" d="M450,120 L516,82" marker-end="url(#d-arrow-routing)"/>
+  <text class="d-edge-label" x="485" y="74" text-anchor="middle">app routes</text>
+  <path class="d-edge" d="M450,140 L516,178" marker-end="url(#d-arrow-routing)"/>
+  <text class="d-edge-label" x="485" y="200" text-anchor="middle">platform route</text>
+</svg>
+<figcaption>Routes come from container labels on <code>cargo-proxy</code>: each app answers on
+<code>&lt;slug&gt;.&lt;apps-suffix&gt;</code> plus any custom domains you attach, and the platform UI
+is routed through the same labels. Certificates are stored in the
+<code>cargo-acme</code> volume (<code>acme.json</code>).</figcaption>
+</figure>
+
+See
 [Architecture](/docs/architecture/) for the full network layout.

@@ -34,6 +34,16 @@ Callouts are styled HTML divs: `<div class="callout callout--warning">…`
 (also `--note`, `--danger`); deployment/domain states use
 `<span class="badge badge--live">` (also `--building`, `--failed`, …).
 
+Architecture diagrams are hand-authored inline SVG in a
+`<figure class="diagram">` with a `<figcaption>` — no Mermaid, no build-time
+renderer, no client JS. They use a 720-wide `viewBox`, an `aria-label`
+describing the diagram, and the token-driven classes defined in
+`DocsLayout.astro`: `d-node` (`--accent`, `--live`, `--fail`, `--ext`),
+`d-lane` for Docker networks, `d-title` / `d-sub` / `d-tag` for text,
+`d-edge` (`--dashed`, `--deny`) plus a per-diagram arrowhead `<marker>`, and
+`d-edge-label`. Diagrams scroll horizontally on narrow screens rather than
+shrinking their labels.
+
 Styling is hand-rolled CSS — no Tailwind, no JS frameworks. Fonts (Space
 Grotesk, JetBrains Mono) are self-hosted via Fontsource. The only client-side
 script is the install-command copy button.

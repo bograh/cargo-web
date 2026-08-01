@@ -37,6 +37,41 @@ same, minus Let's Encrypt certificates.
 
 Exactly three platform containers (plus one per deployed app):
 
+<figure class="diagram">
+<svg viewBox="0 0 720 230" role="img" aria-label="At a glance: internet traffic reaches Traefik on ports 80 and 443, which routes to the controlplane and to one container per app. The controlplane talks to the Postgres db on the private cargo-system network; deployed apps have no route to it.">
+  <defs>
+    <marker id="d-arrow-glance" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path class="d-arrow" d="M0,0 L10,5 L0,10 z"/></marker>
+  </defs>
+  <rect class="d-node--ext" x="16" y="86" width="120" height="52" rx="8"/>
+  <text class="d-title" x="76" y="117" text-anchor="middle">Internet</text>
+  <rect class="d-node--accent" x="176" y="86" width="140" height="52" rx="8"/>
+  <text class="d-title" x="246" y="108" text-anchor="middle">traefik</text>
+  <text class="d-sub" x="246" y="126" text-anchor="middle">80 / 443</text>
+  <rect class="d-node" x="356" y="24" width="170" height="56" rx="8"/>
+  <text class="d-title" x="441" y="50" text-anchor="middle">controlplane</text>
+  <text class="d-sub" x="441" y="68" text-anchor="middle">API · UI · deploys</text>
+  <rect class="d-node" x="356" y="146" width="170" height="56" rx="8"/>
+  <text class="d-title" x="441" y="172" text-anchor="middle">your apps</text>
+  <text class="d-sub" x="441" y="190" text-anchor="middle">one container each</text>
+  <rect class="d-node" x="566" y="24" width="138" height="56" rx="8"/>
+  <text class="d-title" x="635" y="50" text-anchor="middle">db</text>
+  <text class="d-sub" x="635" y="68" text-anchor="middle">Postgres 16</text>
+  <text class="d-tag" x="704" y="100" text-anchor="end">CARGO-SYSTEM</text>
+  <path class="d-edge" d="M136,112 H176" marker-end="url(#d-arrow-glance)"/>
+  <path class="d-edge" d="M316,105 L356,62" marker-end="url(#d-arrow-glance)"/>
+  <path class="d-edge" d="M316,119 L356,164" marker-end="url(#d-arrow-glance)"/>
+  <path class="d-edge" d="M526,52 H566" marker-end="url(#d-arrow-glance)"/>
+  <path class="d-edge--deny" d="M536,150 L614,84"/>
+  <circle class="d-deny-badge" cx="575" cy="117" r="9"/>
+  <path class="d-deny-x" d="M570,112 L580,122"/>
+  <path class="d-deny-x" d="M580,112 L570,122"/>
+  <text class="d-edge-label d-edge-label--deny" x="596" y="142" text-anchor="middle">no route</text>
+</svg>
+<figcaption>Traefik is the only container publishing host ports. The platform database sits
+on a private network deployed apps cannot reach — see
+<a href="/docs/architecture/">Architecture</a> for the full layout.</figcaption>
+</figure>
+
 | Container | Role |
 |---|---|
 | `controlplane` | Single Go binary: API, embedded React UI, job queue, deploy engine. The only stateful piece besides the DB. |
