@@ -3,7 +3,10 @@ interface Props {
   command?: string;
 }
 
-const { command = 'cd deploy && ./install.sh' } = Astro.props;
+const defaultCommand = `git clone https://github.com/bograh/cargo.git
+cd cargo/deploy
+./install.sh`;
+const { command = defaultCommand } = Astro.props;
 ---
 
 <div class="install">
@@ -60,7 +63,9 @@ const { command = 'cd deploy && ./install.sh' } = Astro.props;
   .install__command {
     font-family: var(--font-mono);
     color: var(--text);
-    white-space: nowrap;
+    min-width: 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
   }
 
   .install__prompt {
