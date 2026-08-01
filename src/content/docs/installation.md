@@ -23,9 +23,13 @@ up a **local install** on localhost / the server's IP — see below.
 ## Quick install
 
 ```bash
-cd deploy
+git clone https://github.com/bograh/cargo.git
+cd cargo/deploy
 ./install.sh
 ```
+
+This clones Cargo into a new `cargo` directory. If you already have a Cargo
+checkout, start from its `deploy` directory instead.
 
 The installer runs four phases, in order:
 
