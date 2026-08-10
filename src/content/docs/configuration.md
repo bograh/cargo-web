@@ -40,6 +40,7 @@ settings.
 | `CARGO_DEFAULT_MEM_LIMIT` | `512m` | Memory cap per app container |
 | `CARGO_DEFAULT_CPU_LIMIT` | `1` | CPU cap per app container |
 | `CARGO_DEFAULT_PIDS_LIMIT` | `512` | Max processes per app container |
+| `CARGO_DEPLOY_STRATEGY` | `bluegreen` | Default [deploy strategy](/docs/deployments/): `bluegreen` (zero-downtime) or `recreate` |
 
 ## Operations
 

@@ -87,6 +87,8 @@ For the running app's own output, see the app's Logs tab —
 - **Builds are concurrency-capped** (default 2 at a time)
 - **Deploys are serialized per app** — no two deploys of the same app race
 - **A failed build never affects the currently running app**
+- Under blue/green, **a failed deploy never affects it either** — the new
+  version is discarded and the old one keeps serving
 - Deploy jobs get a **30-minute timeout**, comfortably covering a cold build
   plus the health gate, and a failure is persisted even if the job's context
   was cancelled
@@ -100,9 +102,94 @@ For the running app's own output, see the app's Logs tab —
 
 After each deploy — and again daily — Cargo prunes anything outside the
 newest five deployments per app, so build images don't accumulate on disk.
-Rollback targets within that window always have their image available. The
+Rollback targets within that window always have their image available. An image
+is never removed while something still runs it — that covers a rollback (whose
+image belongs to an older deployment row) and a blue/green hand-off (where two
+colors run different images at once). The
 [disk guardrail](/docs/operations/) reclaims dangling images if space gets
 tight anyway.
+
+## Zero-downtime deploys
+
+By default Cargo deploys **blue/green**: the new version is started *beside*
+the running one and only takes over once it is healthy. The old version keeps
+answering every request until then.
+
+Each app alternates between two colors. A deploy always targets the idle one,
+so the version that is currently serving is never touched until the new one has
+proven itself.
+
+<figure class="diagram">
+<svg viewBox="0 0 720 250" role="img" aria-label="Blue/green hand-off: blue is serving traffic through Traefik. A deploy starts green alongside it. Traefik's healthcheck keeps green out of rotation until it answers, then both colors serve. Once green is healthy Cargo removes blue, leaving green serving alone. If green never becomes healthy it is removed instead and blue keeps serving.">
+  <defs>
+    <marker id="d-arrow-bg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path class="d-arrow" d="M0,0 L10,5 L0,10 z"/></marker>
+  </defs>
+  <text class="d-sub" x="8" y="20">1 — steady state</text>
+  <rect class="d-node--ext" x="8" y="30" width="90" height="38" rx="8"/>
+  <text class="d-sub" x="53" y="53" text-anchor="middle">Traefik</text>
+  <rect class="d-node--live" x="150" y="30" width="96" height="38" rx="8"/>
+  <text class="d-title" x="198" y="53" text-anchor="middle">blue</text>
+  <path class="d-edge" d="M98,49 H146" marker-end="url(#d-arrow-bg)"/>
+
+  <text class="d-sub" x="8" y="104">2 — green starts, gated out of rotation</text>
+  <rect class="d-node--ext" x="8" y="114" width="90" height="38" rx="8"/>
+  <text class="d-sub" x="53" y="137" text-anchor="middle">Traefik</text>
+  <rect class="d-node--live" x="150" y="114" width="96" height="38" rx="8"/>
+  <text class="d-title" x="198" y="137" text-anchor="middle">blue</text>
+  <rect class="d-node--accent" x="290" y="114" width="96" height="38" rx="8"/>
+  <text class="d-title" x="338" y="137" text-anchor="middle">green</text>
+  <path class="d-edge" d="M98,133 H146" marker-end="url(#d-arrow-bg)"/>
+  <path class="d-edge d-edge--dashed" d="M246,133 H286" marker-end="url(#d-arrow-bg)"/>
+  <text class="d-edge-label" x="404" y="137">healthcheck failing — no traffic</text>
+
+  <text class="d-sub" x="8" y="188">3 — green healthy, blue reaped</text>
+  <rect class="d-node--ext" x="8" y="198" width="90" height="38" rx="8"/>
+  <text class="d-sub" x="53" y="221" text-anchor="middle">Traefik</text>
+  <rect class="d-node--live" x="150" y="198" width="96" height="38" rx="8"/>
+  <text class="d-title" x="198" y="221" text-anchor="middle">green</text>
+  <path class="d-edge" d="M98,217 H146" marker-end="url(#d-arrow-bg)"/>
+  <text class="d-edge-label" x="262" y="221">blue removed</text>
+</svg>
+<figcaption>Both colors declare the same Traefik router and service, so Traefik pools them
+and the switch needs no proxy reconfiguration. Only one color survives a successful deploy.</figcaption>
+</figure>
+
+**If the new version never becomes healthy**, Cargo removes it and leaves the
+old one serving. The deployment ends `failed` — there is nothing to roll back,
+because the running app was never replaced.
+
+The very first blue/green deploy of an app that predates this feature is a
+one-time exception: the old container is retired before the first color starts,
+so that deploy has the same brief gap as `recreate`. Every deploy after it is a
+true hand-off.
+
+### Choosing a strategy
+
+Set it per app under **Settings → Deploy strategy**, or instance-wide with
+`CARGO_DEPLOY_STRATEGY` (see [Configuration](/docs/configuration/)).
+
+| Strategy | Behaviour |
+| --- | --- |
+| `bluegreen` *(default)* | New version starts alongside the old one; traffic switches only after it's healthy |
+| `recreate` | Container is replaced in place; brief downtime per deploy |
+
+<div class="callout callout--note">
+  <span class="callout__title">Set a healthcheck path</span>
+  <p>During the hand-off both colors are in Traefik's backend pool, and it is
+  Traefik's healthcheck that keeps a still-booting container out of rotation.
+  Without a healthcheck path there is nothing to probe, so a request can briefly
+  reach the new version before it is ready. Blue/green still works — but set a
+  path to get the full guarantee.</p>
+</div>
+
+<div class="callout callout--warning">
+  <span class="callout__title">When to pick recreate</span>
+  <p>Blue/green runs two instances of your app at the same time for a few
+  seconds. Choose <code>recreate</code> if that isn't safe — for example an app
+  that runs schema migrations on boot, holds an exclusive lock, or is a
+  singleton worker. It also briefly doubles the app's memory and CPU footprint,
+  which counts against its <a href="/docs/operations/">resource limits</a>.</p>
+</div>
 
 ## Rollback
 
@@ -111,11 +198,8 @@ deployment and hit **Rollback**. Rollback redeploys that deployment's
 **retained image without rebuilding**, so service is restored within seconds
 (target: ≤ 1 minute).
 
-<div class="callout callout--warning">
-  <span class="callout__title">Known limitation — brief downtime</span>
-  <p>The apply step recreates the container, so each deploy has a brief
-  downtime window, and a failed healthcheck leaves the app down until you
-  roll back. Zero-downtime (blue/green) deployments are planned for a later
-  phase. A failed deploy alerts the org's owners and admins — see
-  <a href="/docs/operations/">Operations &amp; Hardening</a>.</p>
-</div>
+A rollback is an ordinary deployment, so it uses the app's strategy too: under
+blue/green it hands back over with no downtime.
+
+A failed deploy alerts the org's owners and admins — see
+[Operations & Hardening](/docs/operations/).
