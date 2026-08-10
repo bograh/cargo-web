@@ -55,6 +55,51 @@ docker run --rm -v cargo_cargo-acme:/acme -v "$PWD/<timestamp>.certs":/backup \
 docker compose up -d   # add your TLS overlay's -f flag for production
 ```
 
+## Rotating the master key
+
+If you suspect `CARGO_MASTER_KEY` has leaked — it was committed, pasted into a
+chat, or sat on a machine you no longer trust — you can replace it. Rotation
+re-seals **every** secret Cargo stores (env vars, registry credentials, managed
+database passwords, SMTP, GitHub App, OIDC, alerts webhook) under a new key in a
+single transaction.
+
+```bash
+cd deploy
+
+# 1. Generate and SAVE the new key before anything is re-sealed under it.
+docker compose run --rm --entrypoint cargod controlplane gen-key
+
+# 2. Back up first — this rewrites every secret in the database.
+#    (Admin → Backups → Run backup now, or wait for the daily job.)
+
+# 3. Stop the control plane. Apps keep running; only the UI/API goes down.
+docker compose stop controlplane
+
+# 4. Rotate.
+CARGO_NEW_MASTER_KEY=<the key from step 1> \
+  docker compose run --rm --entrypoint cargod controlplane rotate-key
+
+# 5. Set CARGO_MASTER_KEY to the new key in .env, then bring it back up.
+docker compose up -d controlplane
+```
+
+Rotation is **all-or-nothing**: it runs in one transaction and verifies each
+re-sealed value before storing it, so a failure part-way through leaves
+everything readable with the old key. Re-running a completed rotation is a
+safe no-op, and supplying the wrong current key aborts before writing anything.
+
+<div class="callout callout--warning">
+  <span class="callout__title">Back up the new key first, and the database too</span>
+  <p>Once rotation commits, the old key opens nothing in that database. If you
+  lose the new key at that point, the secrets are gone — which is exactly the
+  situation rotation exists to let you recover from, so don't recreate it.
+  Backup sets made before the rotation still need the <em>old</em> key; the
+  <code>.keyfp</code> fingerprint tells you which key a set belongs to.</p>
+</div>
+
+In-flight SSO logins are invalidated by rotation (the short-lived state cookie
+is sealed with the master key). Users just retry.
+
 ## Disk guardrail
 
 A check runs every 10 minutes against the data directory. Below

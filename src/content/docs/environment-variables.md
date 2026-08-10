@@ -22,7 +22,9 @@ container at deploy time.
   <p>Env vars (and stored registry credentials) are encrypted with
   <code>CARGO_MASTER_KEY</code>. If you lose it, the values are
   <strong>unrecoverable</strong>. Back it up — see
-  <a href="/docs/installation/">Installation</a>.</p>
+  <a href="/docs/installation/">Installation</a>. If the key leaks rather than
+  gets lost, you can
+  <a href="/docs/operations/">rotate it</a> without losing anything.</p>
 </div>
 
 ## Attached databases

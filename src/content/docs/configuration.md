@@ -17,7 +17,7 @@ A commented `deploy/.env.example` ships with the repo.
 
 | Variable | Purpose |
 |---|---|
-| `CARGO_MASTER_KEY` | 64 hex chars (32 bytes). Encrypts all secrets at rest. **Back it up** — losing it makes them unrecoverable. |
+| `CARGO_MASTER_KEY` | 64 hex chars (32 bytes). Encrypts all secrets at rest. **Back it up** — losing it makes them unrecoverable. It can be [rotated](/docs/operations/) if you suspect it leaked. |
 | `CARGO_DB_PASSWORD` | Password for the bundled Postgres container |
 | `CARGO_DATABASE_URL` | Connection string; built automatically by `docker-compose.yml` from the password |
 
