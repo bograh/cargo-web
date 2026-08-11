@@ -75,17 +75,40 @@ repository.
 <div class="callout callout--warning">
   <span class="callout__title">What Cargo won't run</span>
   <p>An overlay can add to a service but never take anything away, so a compose
-  file is validated before anything starts and rejected — with the offending
-  service and directive named in the deploy log — if it uses
-  <code>privileged</code>, <code>cap_add</code>, <code>devices</code>,
-  <code>network_mode: host</code> (or <code>container:</code>),
-  <code>pid</code>/<code>ipc</code>/<code>userns_mode: host</code>, a bind mount
-  of a host path (notably the Docker socket), or a path that escapes the
-  repository. These would step straight past the isolation every other app on
-  the host depends on.</p>
+  file is validated before anything starts, and rejected — with the offending
+  service and directive named in the deploy log — if it would step past the
+  isolation every other app on the host depends on:</p>
+  <ul>
+    <li><code>privileged</code>, <code>cap_add</code>, <code>devices</code>,
+      <code>device_cgroup_rules</code>, <code>cgroup_parent</code>,
+      <code>volumes_from</code></li>
+    <li><code>network_mode: host</code> or <code>container:</code>, and
+      <code>pid</code>/<code>ipc</code>/<code>userns_mode: host</code></li>
+    <li><code>security_opt</code> — compose <em>appends</em> to Cargo's own
+      hardening rather than replacing it, so an entry like
+      <code>seccomp:unconfined</code> would simply hand back syscall
+      filtering</li>
+    <li>Any host path outside your repository: a bind mount (the Docker socket
+      above all), a named volume defined as a bind through
+      <code>driver_opts</code>, a <code>secret</code> or <code>config</code>
+      reading a host <code>file:</code>, or a build context that climbs out</li>
+  </ul>
   <p><code>ports:</code> is refused too, for a different reason: apps are
   reached through Traefik, and a published port would collide with every other
   app on the server. Remove the block and set the app's exposed port instead.</p>
+</div>
+
+<div class="callout callout--note">
+  <span class="callout__title">Validated as resolved, not as written</span>
+  <p>The check runs against the configuration Docker Compose actually resolves
+  — the output of <code>docker compose config</code> — rather than the text of
+  your file. Compose expands <code>${VAR}</code> interpolation, follows
+  <code>extends: {file: …}</code>, and resolves YAML anchors and merge keys
+  <em>after</em> a reader would see the source, and each of those can otherwise
+  hide a directive. Interpolation matters most: your app's environment
+  variables are available to your compose file, so a check that ran before
+  interpolation could be sidestepped with a variable set through the
+  environment editor.</p>
 </div>
 
 Two further differences from the other sources:

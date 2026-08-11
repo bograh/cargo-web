@@ -114,6 +114,15 @@ webhook** (stored encrypted, write-only — the UI only ever reports whether
 one is configured). When [SMTP](/docs/administration/) is configured, the
 same events are also emailed.
 
+<div class="callout callout--danger">
+  <span class="callout__title">Re-enter a webhook saved before v1.4</span>
+  <p>Earlier versions stored the webhook URL in a way that corrupted it on
+  save, so it could never be decrypted and <strong>no webhook alert was ever
+  delivered</strong>. The stored value is unrecoverable. Admin → Alerts webhook
+  now shows <strong>needs re-entry</strong> when it finds such a value — enter
+  the URL again to fix it. Email alerts were unaffected.</p>
+</div>
+
 | Event | Recipients |
 |---|---|
 | Deploy failed | Org owners and admins |
