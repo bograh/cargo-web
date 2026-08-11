@@ -55,6 +55,52 @@ Deploy a plain image reference — e.g. `ghcr.io/org/app:tag` — with no git
 integration at all. Private registries are supported with **stored, encrypted
 pull credentials**.
 
+### Compose file
+
+Point Cargo at a repository that already contains a **Docker Compose file** and
+it runs that file as-is, layering its own networking, Traefik labels, TLS, and
+resource limits over it. Multi-service apps — a web service with a worker, a
+queue, a cache — deploy without being rewritten.
+
+You supply the compose file's path in the repo (default `docker-compose.yml`)
+and the name of the **web service**: the one Cargo routes the app's domain to
+and health-gates. Every other service in your file runs untouched.
+
+Cargo never rewrites your YAML. It generates a small overlay and applies both
+files together, so compose's own merge rules combine them — which is also why
+the overlay can add a network without displacing the ones your services already
+use, and why your relative paths and build contexts resolve against your own
+repository.
+
+<div class="callout callout--warning">
+  <span class="callout__title">What Cargo won't run</span>
+  <p>An overlay can add to a service but never take anything away, so a compose
+  file is validated before anything starts and rejected — with the offending
+  service and directive named in the deploy log — if it uses
+  <code>privileged</code>, <code>cap_add</code>, <code>devices</code>,
+  <code>network_mode: host</code> (or <code>container:</code>),
+  <code>pid</code>/<code>ipc</code>/<code>userns_mode: host</code>, a bind mount
+  of a host path (notably the Docker socket), or a path that escapes the
+  repository. These would step straight past the isolation every other app on
+  the host depends on.</p>
+  <p><code>ports:</code> is refused too, for a different reason: apps are
+  reached through Traefik, and a published port would collide with every other
+  app on the server. Remove the block and set the app's exposed port instead.</p>
+</div>
+
+Two further differences from the other sources:
+
+- **Deploys are in place.** [Blue/green](/docs/deployments/) would stand up a
+  second copy of *every* service in your file, databases included, each with its
+  own volumes — that is a second stack, not a hand-off. A compose app therefore
+  always uses the `recreate` strategy.
+- **No image rollback.** There is no single retained image to re-apply;
+  redeploy the branch instead.
+
+Named volumes, `build:` contexts, and `depends_on` all work normally. Cargo's
+environment variables are injected into the web service alongside any
+`env_file` you already declare.
+
 ## Settings
 
 | Setting | Purpose |
@@ -65,6 +111,8 @@ pull credentials**.
 | **Auto-deploy** | When on, pushes to the tracked branch deploy automatically |
 | **Notify on successful deploy** | Opt in to success alerts; failures always notify |
 | **Resource limits** | Memory, CPU, and max-process caps for this app's container |
+| **Deploy strategy** | Zero-downtime blue/green or in-place recreate ([Deployments](/docs/deployments/)) |
+| **Compose file / Web service** | Compose sources only: the file's path in the repo and the service that serves HTTP |
 
 ### Healthchecks are opt-in
 
