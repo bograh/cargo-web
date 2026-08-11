@@ -14,6 +14,8 @@ From the admin area, without reinstalling or touching `.env`:
 
 | Section | Purpose |
 |---|---|
+| **Server** | Live host CPU, memory, disk, and container count ([Metrics & Logs](/docs/metrics-logs/)) |
+| **All applications** | Newest metrics for every app on the instance, across organizations |
 | **Instance settings** | Apps-domain suffix and SMTP relay |
 | **GitHub App** | Create or configure the GitHub App used for repo access and push-to-deploy |
 | **SSO (OIDC)** | Point the instance at an identity provider |

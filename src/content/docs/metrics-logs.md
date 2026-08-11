@@ -38,6 +38,43 @@ the app thinks it served.
   <code>48h</code>.</p>
 </div>
 
+## Instance-wide monitoring
+
+App metrics answer "is this app healthy". The **Admin** page answers "is the
+*server* healthy", with two views instance admins see across every
+organization.
+
+**Server** shows four live tiles on the same 15-second tick and 48-hour
+retention as app metrics:
+
+| Tile | Source |
+|---|---|
+| Host CPU % | `/proc/stat`, as a delta between ticks |
+| Host memory | `/proc/meminfo` — used is derived from `MemAvailable`, so reclaimable page cache doesn't read as "full" |
+| Disk used | `statfs` on the data directory |
+| Containers | `docker ps` — every container on the host, not just apps |
+
+**All applications** lists the newest sample for every app on the instance —
+CPU, memory, requests/s, error rate, and p95 — with a link through to each
+app. An error rate above 5% is badged so it stands out. This is the one view
+that deliberately crosses organization boundaries, so it is instance-admin
+only.
+
+<div class="callout callout--note">
+  <span class="callout__title">These really are host figures</span>
+  <p>The controlplane runs in a container, but Docker does not namespace
+  <code>/proc/stat</code> or <code>/proc/meminfo</code> — so the CPU and memory
+  readings describe the whole machine, not the controlplane's own container.
+  The container count includes the platform's own three containers and any
+  managed databases, which is why it is usually higher than the number of
+  running apps.</p>
+</div>
+
+Each source degrades independently: if the Docker socket is unavailable the
+container count reports zero, but the CPU, memory, and disk series keep
+recording. Losing the whole sample exactly when something is wrong with the
+host would be the worst possible time for the charts to go blank.
+
 Metrics appear roughly 15 seconds after an app starts running. A stopped app
 has no container to sample, so its charts flatten out.
 
