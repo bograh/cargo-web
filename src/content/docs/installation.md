@@ -46,12 +46,13 @@ The installer runs four phases, in order:
 4. **Launch** — creates the shared `cargo-proxy` network if it doesn't exist,
    then runs `docker compose up -d` with the right overlay file for your mode.
 
-<div class="callout callout--danger">
-  <span class="callout__title">Back up your master key</span>
-  <p>Back up <code>CARGO_MASTER_KEY</code> from <code>.env</code> somewhere safe.
+<callout type="danger">
+  **Back up your master key**
+
+  Back up `CARGO_MASTER_KEY` from `.env` somewhere safe.
   Environment variables and credentials are encrypted with it and are
-  <strong>unrecoverable without it</strong>.</p>
-</div>
+  **unrecoverable without it**.
+</callout>
 
 Once the stack is up, open `https://<platform-domain>` and register — **the
 first account becomes the instance admin.**
@@ -97,6 +98,35 @@ When `CARGO_DNS_PROVIDER` is set, add the provider's credential environment
 variables to `.env` as well (e.g. `CF_DNS_API_TOKEN` for Cloudflare) — see
 [Domains & SSL](/docs/domains-ssl/). Every other setting has a sane default;
 the full list is in [Configuration](/docs/configuration/).
+
+## Resource ceilings
+
+Per-app memory/CPU/PID limits are advisory defaults. Instance admins can cap
+how far a tenant raises their own limits:
+
+| Variable | Purpose |
+|---|---|
+| `CARGO_MAX_MEM_LIMIT` | Absolute ceiling for per-app `mem_limit` |
+| `CARGO_MAX_CPU_LIMIT` | Absolute ceiling for per-app `cpus` |
+| `CARGO_MAX_PIDS_LIMIT` | Absolute ceiling for per-app `pids_limit` |
+
+Without these, a tenant could set `mem_limit` to an arbitrarily large value.
+On a shared instance, set them to protect the host.
+
+## Git-clone host screening
+
+Cargo validates repository URLs against server-side request forgery. Only
+`https://`, `ssh://`, and `git@host:path` transports are accepted; hosts
+that resolve to loopback, RFC1918, link-local, or cloud-metadata addresses
+are refused.
+
+If your git server is self-hosted on a private network:
+
+```bash
+CARGO_ALLOW_PRIVATE_GIT_HOSTS=true
+```
+
+This widens *where* clones may go, never *which transports*.
 
 ## Installer flags
 

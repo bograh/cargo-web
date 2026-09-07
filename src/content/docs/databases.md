@@ -61,10 +61,24 @@ downloading them requires the **admin** role in the org.
   secrets — see <a href="/docs/operations/">Operations &amp; Hardening</a>.</p>
 </div>
 
-<div class="callout callout--warning">
-  <span class="callout__title">Exposing a host port</span>
-  <p>Instances can optionally expose a host port for external clients (e.g.
-  a local <code>psql</code> or <code>redis-cli</code>). Only enable this if
-  you understand the instance will be reachable from outside the docker
-  network.</p>
-</div>
+## Redis modes
+
+Redis instances choose between two modes at creation. Both give each attached
+app its own ACL user and its own logical database index, so no app can read
+another's keys or flush the instance:
+
+| Mode | Pub/sub | Use when |
+|---|---|---|
+| **acl** | Disabled (channels are global, not scoped to an index) | Default. Maximum isolation |
+| **shared** | Apps can publish/subscribe to each other's channels | An app needs pub/sub |
+
+Pick `shared` only if an app genuinely needs pub/sub; `acl` is the safer
+default.
+
+<callout type="warning">
+  **Exposing a host port**
+
+  Instances can optionally expose a host port for external clients (e.g.
+  a local `psql` or `redis-cli`). Only enable this if you understand the
+  instance will be reachable from outside the docker network.
+</callout>

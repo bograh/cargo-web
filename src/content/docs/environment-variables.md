@@ -16,6 +16,8 @@ container at deploy time.
   through the UI
 - **Applied on deploy** — changing env vars triggers a reconcile on the next
   deploy; redeploy the app to pick up changes
+- **Validated keys** — env var keys are checked for validity; values are
+  applied atomically in one transaction (no partial state on failure)
 
 <div class="callout callout--danger">
   <span class="callout__title">The master key is unrecoverable</span>

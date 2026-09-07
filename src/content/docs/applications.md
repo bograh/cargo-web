@@ -124,6 +124,17 @@ Named volumes, `build:` contexts, and `depends_on` all work normally. Cargo's
 environment variables are injected into the web service alongside any
 `env_file` you already declare.
 
+## Source validation
+
+When deploying from a git repository, Cargo validates the URL before cloning:
+
+- Only `https://`, `ssh://`, and `git@host:path` transports are accepted
+- Hosts that resolve to loopback, RFC1918, link-local, or cloud-metadata
+  addresses are refused (SSRF protection)
+- `ext::` helpers and leading-dash hosts are rejected
+- If your git server is on a private network, set
+  `CARGO_ALLOW_PRIVATE_GIT_HOSTS=true`
+
 ## Settings
 
 | Setting | Purpose |
@@ -170,6 +181,9 @@ rotated logs.
 Stop/start records the app's **desired state**, so a stopped app stays
 stopped across platform restarts. A stopped app has no container to sample or
 attach to, so its metrics and runtime logs go quiet until it starts again.
+
+Environment variable keys are validated; values are applied atomically in
+one transaction on the next deploy. The exposed port is range-checked.
 
 ## What happens on deploy
 

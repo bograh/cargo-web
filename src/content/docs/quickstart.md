@@ -14,7 +14,9 @@ to a live app in **≤ 5 minutes** (plus build time).
 Open `https://<platform-domain>` — or `http://localhost` / `http://<server-ip>`
 for a [local install](/docs/installation/) — and create an account. **The
 first registered account becomes the instance admin** — no CLI user-seeding
-needed.
+needed. After the first account, registration is **invite-only by default**:
+you'll need an invite link from an organization admin to create additional
+accounts.
 
 ## 2. Create an organization
 

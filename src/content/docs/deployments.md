@@ -203,3 +203,15 @@ blue/green it hands back over with no downtime.
 
 A failed deploy alerts the org's owners and admins — see
 [Operations & Hardening](/docs/operations/).
+
+## Worker hosts
+
+Apps can be deployed to remote machines registered as worker hosts under
+**Admin → Worker hosts**. Each worker runs its own Traefik/proxy stack and
+is reachable over SSH. Blue/green deploys work identically on workers.
+
+## SSE stream limits
+
+Live log streams are capped per-user (8) and per-instance (64). Access is
+revalidated every minute — revoked or expired sessions drop their streams
+immediately.

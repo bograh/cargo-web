@@ -74,6 +74,27 @@ Every successful state-changing request is recorded with the actor, action,
 target, and timestamp. Admins see the whole instance; org owners and admins
 see their own org's slice. Retention defaults to 180 days.
 
+## Who can sign up
+
+An account on a Cargo instance can deploy containers on the host, so
+registration is **invite-only by default**: the first account becomes the
+instance admin, and everyone after needs an invite link from an organization
+admin.
+
+Change the setting under **Admin → Instance settings → Who can sign up**:
+
+| Setting | Behaviour |
+|---|---|
+| **Invited people only** (default) | Only users with a valid invite link can register |
+| **Anyone** | Open registration (anyone can create an account) |
+| **Nobody** | No new registrations; the existing user base is fixed |
+
+<callout type="danger">
+  **Upgrading from an earlier version?** Instances upgrading to the
+  security-hardened release become invite-only on restart. Set it back to
+  **Anyone** under Admin → Instance settings if you relied on open sign-up.
+</callout>
+
 ## Upgrades
 
 Database migrations run automatically at startup, so upgrading the platform
@@ -102,3 +123,20 @@ platform:
   [Operations & Hardening](/docs/operations/)
 - Authentication sits behind an `AuthProvider` interface, which is how OIDC
   plugs in alongside passwords
+
+## Git-clone SSRF screening
+
+Repository URLs are validated against server-side request forgery. Only
+`https://`, `ssh://`, and `git@host:path` transports are accepted. Hosts
+that resolve to loopback, RFC1918, link-local, or cloud-metadata addresses
+are refused. If your git server is on a private network, set
+`CARGO_ALLOW_PRIVATE_GIT_HOSTS=true` — this widens *where* clones may go,
+never *which transports*.
+
+## Key rotation
+
+If `CARGO_MASTER_KEY` is suspected compromised, `cargod rotate-key`
+re-seals every stored secret (env vars, registry credentials, database
+passwords, SMTP/GitHub/OIDC/webhook settings) under a new key in one
+transaction. Use `cargod gen-key` to produce the new key first. See
+[Operations & Hardening](/docs/operations/) for the full runbook.

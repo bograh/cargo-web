@@ -29,6 +29,8 @@ URL in a few clicks — no SSH, no YAML, no proxy config.
   organization
 - **Production safeguards** — scheduled control-plane backups, disk guardrail,
   deploy/disk/backup alerts, per-app resource caps, and an audit log
+- **Worker hosts** — deploy to remote machines over SSH (early access)
+- **Invite-only signup** by default, with per-instance configuration
 
 No domain yet? Cargo installs on localhost or a bare server IP and works the
 same, minus Let's Encrypt certificates.

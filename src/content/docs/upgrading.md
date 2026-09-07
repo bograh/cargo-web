@@ -24,11 +24,21 @@ configuration.
   restart is either resumed by the job queue or failed cleanly with a reason
   — see [Deployments](/docs/deployments/)
 
-<div class="callout callout--note">
-  <span class="callout__title">Before you upgrade</span>
-  <p>Make sure your <code>CARGO_MASTER_KEY</code> backup is safe and current.
+<callout type="note">
+  **Before you upgrade**
+
+  Make sure your `CARGO_MASTER_KEY` backup is safe and current.
   Encrypted secrets (env vars, registry credentials) are unrecoverable
-  without it — see <a href="/docs/installation/">Installation</a>. Cargo takes
+  without it — see [Installation](/docs/installation/). Cargo takes
   a daily control-plane backup on its own; you can force a fresh one from
-  <strong>Admin → Backups</strong> before a major upgrade.</p>
-</div>
+  **Admin → Backups** before a major upgrade.
+</callout>
+
+<callout type="warning">
+  **Invite-only default**
+
+  Instances upgrading to the security-hardened release become
+  **invite-only on restart**. If you relied on open sign-up, go to
+  **Admin → Instance settings → Who can sign up** and set it back to
+  **Anyone**.
+</callout>

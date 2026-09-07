@@ -38,6 +38,8 @@ Either way:
 
 - Each invite has a chosen **role** and **expiry**, and is **revocable**
 - The token is **shown once** at creation and stored hashed
+- Email-addressed invites are **single-use and bound to the recipient's
+  address** — they cannot be forwarded or reused
 - Accepting a valid invite adds membership with the invite's role;
   re-accepting is a no-op
 - Revoked, expired, or bogus tokens are rejected

@@ -163,11 +163,27 @@ in [Operations & Hardening](/docs/operations/).
 | Volume | Contents |
 |---|---|
 | `cargo-db` | Postgres data |
-| `cargo-data` | The controlplane's `<dataDir>` — `databases/` (managed DB volumes), `db-backups/` (snapshots), `db-logs/` (provisioning logs), `platform-backups/` (control-plane dumps + certificate copies) |
+| `cargo-data` | The controlplane's `<dataDir>` — `databases/` (managed DB volumes), `db-backups/` (snapshots), `db-logs/` (provisioning logs), `platform-backups/` (control-plane dumps + certificate copies), `hosts/` (per-worker docker contexts and SSH homes) |
 | `cargo-acme` | Traefik's certificate store (`acme.json`) |
 
 The production image is `ghcr.io/bograh/cargo:latest` — a multi-stage build
 (web build → Go build → alpine with the docker CLI and compose plugin).
+
+## Security & performance highlights
+
+- **Invite-only signup** by default; configurable per instance
+- **Resource ceilings** — `CARGO_MAX_MEM_LIMIT` / `_CPU_LIMIT` / `_PIDS_LIMIT`
+  cap how far tenants can raise per-app limits
+- **Git-clone SSRF screening** — blocks non-https/ssh transports and
+  private-address resolution
+- **Compose validation** — rejects tenant-supplied Traefik labels, external
+  networks, and images carrying their own Traefik labels; validated against
+  resolved config, not raw YAML
+- **DB connection pool** — sized explicitly (20 max / 2 min) instead of
+  defaulting to NumCPU
+- **Indexed lookups** — critical query paths use covering indexes
+- **SSE stream caps** — per-user (8) and instance (64) limits with access
+  revalidation
 
 ## Development
 
