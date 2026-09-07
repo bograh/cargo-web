@@ -162,6 +162,23 @@ Each app container additionally runs with:
 - **Rotated logs** — container logs are size-capped so one chatty app can't
   fill the disk
 
+## Git-clone SSRF screening
+
+Repo URLs reach `git clone` running on the control plane's own network, so
+Cargo treats them as attacker input. Only `https://`, `ssh://`, and
+`git@host:path` transports are accepted, and hosts that resolve to loopback,
+RFC1918, link-local, or cloud-metadata addresses are refused at clone time.
+`ext::` helpers and leading-dash hosts are rejected outright. Self-hosted
+git servers on a private network opt back in with
+`CARGO_ALLOW_PRIVATE_GIT_HOSTS=true` (see [Configuration](/docs/configuration/)).
+
+## SSE stream limits
+
+Streaming endpoints (live deploy logs, metrics, instance monitoring) are
+capped at **8 concurrent streams per user** and **64 per instance**. Access
+is revalidated every minute, so a revoked or expired session drops its
+streams even while they're open.
+
 ## API hardening
 
 - **Security headers** on every response: `X-Content-Type-Options`,

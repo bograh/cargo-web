@@ -41,6 +41,26 @@ settings.
 | `CARGO_DEFAULT_CPU_LIMIT` | `1` | CPU cap per app container |
 | `CARGO_DEFAULT_PIDS_LIMIT` | `512` | Max processes per app container |
 | `CARGO_DEPLOY_STRATEGY` | `bluegreen` | Default [deploy strategy](/docs/deployments/): `bluegreen` (zero-downtime) or `recreate` |
+| `CARGO_MAX_MEM_LIMIT` | — | Absolute ceiling for per-app `mem_limit` — a tenant cannot raise their own app above it |
+| `CARGO_MAX_CPU_LIMIT` | — | Absolute ceiling for per-app `cpus` |
+| `CARGO_MAX_PIDS_LIMIT` | — | Absolute ceiling for per-app `pids_limit` |
+
+The three `CARGO_MAX_*` ceilings exist because per-app limits are advisory:
+without them, a tenant could set `mem_limit` to an arbitrarily large value.
+On a shared instance, set them to protect the host.
+
+## Git host screening
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `CARGO_ALLOW_PRIVATE_GIT_HOSTS` | `false` | When true, allows cloning from git hosts that resolve to private addresses |
+
+Repository URLs are validated against server-side request forgery: only
+`https://`, `ssh://`, and `git@host:path` transports are accepted, and hosts
+that resolve to loopback, RFC1918, link-local, or cloud-metadata addresses are
+refused. Set this only if your git server is self-hosted on a private network
+— it widens *where* clones may go, never *which transports*. See
+[Applications](/docs/applications/).
 
 ## Operations
 
