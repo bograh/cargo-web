@@ -30,7 +30,15 @@ its own database/user, not the admin account. Attaching injects the engine's
 connection variable into the app's environment at deploy time.
 
 One attachment per engine per app, so an app can hold one of each
-simultaneously. Detaching drops the per-app credentials again.
+simultaneously. Detaching drops the per-app credentials again but **keeps the
+app's database and its data**. On Postgres, attaching the same instance
+again later hands the existing database — its schemas, tables, views, sequences, functions,
+and types — back to the new per-app user, so the app picks up where it left
+off with full access.
+
+Two attach requests for the same app and instance (a double-click, say) can't
+race each other into mismatched credentials: the second is rejected as a
+conflict before it touches the engine.
 
 Redis instances offer a **shared** mode (one password) or **ACL** mode
 (per-app ACL users), chosen at creation.

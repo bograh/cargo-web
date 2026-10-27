@@ -163,11 +163,14 @@ in [Operations & Hardening](/docs/operations/).
 | Volume | Contents |
 |---|---|
 | `cargo-db` | Postgres data |
-| `cargo-data` | The controlplane's `<dataDir>` — `databases/` (managed DB volumes), `db-backups/` (snapshots), `db-logs/` (provisioning logs), `platform-backups/` (control-plane dumps + certificate copies), `hosts/` (per-worker docker contexts and SSH homes) |
+| `cargo-data` | The controlplane's `<dataDir>` — `databases/` (managed DB volumes), `db-backups/` (snapshots), `db-logs/` (provisioning logs), `platform-backups/` (control-plane dumps + certificate copies), `hosts/` (per-worker docker contexts, SSH key, config, pinned `known_hosts`, and `ssh` wrapper) |
 | `cargo-acme` | Traefik's certificate store (`acme.json`) |
 
 The production image is `ghcr.io/bograh/cargo:latest` — a multi-stage build
-(web build → Go build → alpine with the docker CLI and compose plugin).
+(web build → Go build → alpine with the docker CLI, compose plugin, and
+`openssh-client` for reaching worker hosts). It builds for **amd64 and
+arm64**; the bundled Nixpacks binary is pinned by checksum for each
+architecture, and the build refuses any architecture without a pin.
 
 ## Security & performance highlights
 
@@ -176,9 +179,18 @@ The production image is `ghcr.io/bograh/cargo:latest` — a multi-stage build
   cap how far tenants can raise per-app limits
 - **Git-clone SSRF screening** — blocks non-https/ssh transports and
   private-address resolution
+- **Domain-check SSRF screening** — the custom-domain probe connects only to
+  public addresses and never follows redirects
 - **Compose validation** — rejects tenant-supplied Traefik labels, external
-  networks, and images carrying their own Traefik labels; validated against
-  resolved config, not raw YAML
+  networks, external or renamed volumes, and images carrying their own
+  Traefik labels; validated against resolved config, not raw YAML
+- **Validated inputs into generated compose** — image references, healthcheck
+  paths, and compose service names are checked against strict grammars and
+  quoted, so no field can add keys to the file Cargo applies
+- **Per-deploy registry credentials** — each pull logs in through a throwaway
+  Docker config, never the control plane's own
+- **Least-privilege org roles** — nobody grants above their own role; only
+  owners can touch owners
 - **DB connection pool** — sized explicitly (20 max / 2 min) instead of
   defaulting to NumCPU
 - **Indexed lookups** — critical query paths use covering indexes
@@ -196,6 +208,6 @@ Serves the platform on http://localhost:8080 without Traefik/SSL.
 
 - Backend tests: `go test ./...` (integration tests run against real
   Postgres via testcontainers)
-- Frontend tests: `npm test` in `web/`
+- Frontend tests: `npx vitest run` in `web/` (lint with `npm run lint`)
 - End-to-end smoke test (install → register → deploy → live):
   `scripts/smoke.sh`

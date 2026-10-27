@@ -24,6 +24,19 @@ Domain status is shown in the UI based on DNS + HTTPS checks that run every
   <span class="badge badge--misconfigured">misconfigured</span>
 </p>
 
+| Status | Meaning |
+|---|---|
+| `misconfigured` | The domain doesn't resolve |
+| `pending` | It resolves, but nothing answered over HTTPS or HTTP yet |
+| `active` | It answered — any HTTP status counts, including a redirect |
+
+Domains are probed eight at a time, each with a 15-second budget. Because a
+tenant chooses the domain, the probe treats it as untrusted: it only connects
+to **public** IP addresses — checked at connect time, so a DNS answer that
+changes between lookup and request doesn't slip through — and never follows
+redirects. A domain that resolves only to private, loopback, or link-local
+addresses therefore stays `pending`.
+
 ## SSL modes
 
 The mode is chosen at install time, and decides which compose overlay runs:

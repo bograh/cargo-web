@@ -46,7 +46,10 @@ app's settings.
 Dockerfile builds additionally support:
 
 - **Custom context path** — build from a subdirectory of the repo
-- **Custom Dockerfile path** — e.g. `docker/Dockerfile.prod`
+- **Custom Dockerfile path** — e.g. `docker/Dockerfile.prod`. It is
+  relative to the **repository root**, not the context, for both
+  auto-detection and the build: with context `api`, set the path to
+  `api/Dockerfile`
 - **Build args** — passed through to `docker build`
 
 ### Registry image
@@ -54,6 +57,15 @@ Dockerfile builds additionally support:
 Deploy a plain image reference — e.g. `ghcr.io/org/app:tag` — with no git
 integration at all. Private registries are supported with **stored, encrypted
 pull credentials**.
+
+The reference must follow Docker's image-name grammar (registry host and
+port, lowercase path, optional `:tag` and `@digest`). Every deploy — including
+a rollback — **pulls the image** with only this app's credentials, logged in
+through a throwaway Docker config that's deleted afterwards. Credentials never
+land in a shared config, and the pull doubles as the access check: an app
+can't run a private image just because another tenant's deploy left it in the
+local cache. The trade-off is that public images are re-pulled on each deploy,
+so the registry has to be reachable.
 
 ### Compose file
 
@@ -92,6 +104,11 @@ repository.
       above all), a named volume defined as a bind through
       <code>driver_opts</code>, a <code>secret</code> or <code>config</code>
       reading a host <code>file:</code>, or a build context that climbs out</li>
+    <li>Volumes that reach outside the app: one declared
+      <code>external: true</code>, or renamed with a top-level
+      <code>name:</code> — either could mount an existing volume such as the
+      platform's own database or another app's data. Let compose scope volume
+      names to your project instead</li>
   </ul>
   <p><code>ports:</code> is refused too, for a different reason: apps are
   reached through Traefik, and a published port would collide with every other
@@ -124,6 +141,9 @@ Named volumes, `build:` contexts, and `depends_on` all work normally. Cargo's
 environment variables are injected into the web service alongside any
 `env_file` you already declare.
 
+The web service name must be a valid compose service name (letters, digits,
+`.`, `_`, `-`).
+
 ## Source validation
 
 When deploying from a git repository, Cargo validates the URL before cloning:
@@ -135,23 +155,31 @@ When deploying from a git repository, Cargo validates the URL before cloning:
 - If your git server is on a private network, set
   `CARGO_ALLOW_PRIVATE_GIT_HOSTS=true`
 
+Files Cargo writes into a checkout — the `.env` for compose apps and a
+generated `Dockerfile.cargo` — **replace** whatever the repository has at that
+path rather than writing through it. A repo that commits `.env` as a symlink
+to somewhere on the server gets its link removed, not followed.
+
 ## Settings
 
 | Setting | Purpose |
 |---|---|
-| **Slug** | Unique, DNS-safe name; determines the auto subdomain |
+| **Slug** | Unique, DNS-safe name derived from the app name (max 40 chars); determines the auto subdomain. New slugs ending in `-blue`, `-green`, or `-custom` get `-app` appended (`foo blue` → `foo-blue-app`), because Cargo uses those suffixes in its own container and router names |
 | **Exposed port** | The container port Traefik routes traffic to |
-| **Healthcheck path** | Optional. Blank = live once the container stays up; set a path to also require an HTTP check |
+| **Healthcheck path** | Optional. Blank = live once the container stays up; set an absolute path (e.g. `/healthz`, query allowed) to also require an HTTP check |
 | **Auto-deploy** | When on, pushes to the tracked branch deploy automatically |
 | **Notify on successful deploy** | Opt in to success alerts; failures always notify |
 | **Resource limits** | Memory, CPU, and max-process caps for this app's container |
 | **Deploy strategy** | Zero-downtime blue/green or in-place recreate ([Deployments](/docs/deployments/)) |
-| **Compose file / Web service** | Compose sources only: the file's path in the repo and the service that serves HTTP |
+| **Compose file / Web service** | Compose sources only: the branch, the file's path in the repo, and the service that serves HTTP |
+| **Worker host** | Where the app runs: this machine or a registered [worker host](/docs/deployments/#worker-hosts). Chosen at creation; see [moving an app](/docs/deployments/#moving-an-app-between-hosts) |
 
 ### Healthchecks are opt-in
 
 A deploy gates on the container **staying up** for a short settling period.
-If you also set a healthcheck path, the deploy additionally polls
+A container that was already restarting before the deploy isn't mistaken for
+a new crash loop — only restarts during the deploy count. If you also set a
+healthcheck path, the deploy additionally polls
 `http://<container>:<port><path>` and only goes live once it answers. Leave
 it blank for workers, queue consumers, and anything else that doesn't serve
 HTTP — with a path set, a non-HTTP app would never pass.
@@ -176,7 +204,10 @@ rotated logs.
 | **Stop** | Stops the app's container; the app, its config, and its deployment history stay put |
 | **Start** | Brings a stopped app back up |
 | **Rollback** | Redeploys a previous deployment's retained image |
-| **Delete** | Removes the app, its container, and its routes |
+| **Delete** | Removes the app, its container, and its routes — on whichever host runs it, and on any host it recently moved off |
+
+Stop, start, delete, and runtime logs all act on the machine the app actually
+runs on, worker host included.
 
 Stop/start records the app's **desired state**, so a stopped app stays
 stopped across platform restarts. A stopped app has no container to sample or

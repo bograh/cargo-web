@@ -30,7 +30,9 @@ To deploy from repositories, go to the **admin area → GitHub App** and hit
 **Create GitHub App automatically** — Cargo posts a prefilled manifest to
 GitHub and captures the credentials on the way back, so there's nothing to
 copy by hand. (You can still paste existing credentials if you'd rather.)
-Then install the app on your GitHub account or org.
+Then connect it from your organization's settings, which sends you to GitHub
+to install the app on your account or org. The install link is single-use
+and expires after 15 minutes — if it lapses, start again from settings.
 
 Skip this if you only plan to deploy registry images.
 

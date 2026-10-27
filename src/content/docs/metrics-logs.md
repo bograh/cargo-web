@@ -19,7 +19,7 @@ The **Metrics** tab shows six live tiles, each with a sparkline:
 | Memory | `docker stats` (with the container's memory limit) |
 | Requests/s | Traefik's Prometheus counters for the app's router |
 | Error rate | Traefik 5xx responses as a share of requests |
-| Latency p50 / p95 | Traefik request-duration histogram |
+| Latency p50 / p95 | Traefik request-duration histogram, over the last 15-second interval |
 
 A collector job samples every running app **every 15 seconds**, writes the
 sample to Postgres, and publishes it to subscribers. The tab loads the last
@@ -28,7 +28,12 @@ state is shown next to the page title (`streaming` / `disconnected`).
 
 Traffic figures come from Traefik's Prometheus endpoint on an internal-only
 listener (`:8082`), so they reflect what actually reached the proxy, not what
-the app thinks it served.
+the app thinks it served. Traefik keeps a separate histogram per status code,
+method, and protocol; Cargo sums them per app, and computes percentiles from
+the change since the previous sample — a latency spike shows up in the
+interval it happened, rather than being averaged into everything since
+Traefik started. If Traefik restarts, the first sample after it uses the
+fresh totals.
 
 <div class="callout callout--note">
   <span class="callout__title">Retention</span>
@@ -81,7 +86,10 @@ has no container to sample, so its charts flatten out.
 ## Runtime logs
 
 The **Logs** tab streams the running container's stdout/stderr over SSE,
-starting from the last 200 lines. This is your application's own output —
+starting from the last 200 lines. If the stream drops — a redeploy restarts
+the container, or the session needs refreshing — the tab reconnects on its
+own and starts over from the latest 200 lines, without duplicating what was
+already shown. For apps on a worker host, logs are read from that host. This is your application's own output —
 distinct from the build output of a deployment. Any org member (viewer and
 up) can read it.
 
@@ -92,9 +100,11 @@ yet.
 ## Deployment logs
 
 Build and deploy logs are captured **per deployment** and streamed live while
-the deploy runs (see [Deployments](/docs/deployments/)). They're kept for the
-**five most recent deployments per app** — older logs and their images are
-reclaimed by the prune job.
+the deploy runs (see [Deployments](/docs/deployments/)). The stream ends on its own once the deployment finishes. Logs are kept
+with their deployment rows: the newest five per app always, plus the live
+deployment and any still in progress — older finished deployments' logs and
+images are reclaimed by the prune job (see
+[Image retention](/docs/deployments/#image-retention)).
 
 ## Platform-level metrics
 

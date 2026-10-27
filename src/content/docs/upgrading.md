@@ -1,11 +1,28 @@
 ---
 title: Upgrading
-description: Pull, restart, done — migrations run at startup.
+description: Re-run the installer or pull and restart — migrations run at startup.
 order: 13
 section: Reference
 ---
 
-Upgrading Cargo is a two-command operation:
+The simplest upgrade is to run the install command again:
+
+```bash
+curl -fsSL https://usecargo.vercel.app/install.sh | sh
+```
+
+On a server that already has Cargo, the bootstrap updates the checkout in
+`/opt/cargo` (or `CARGO_INSTALL_DIR`) and runs `deploy/install.sh --update`.
+That keeps `.env` untouched — master key, database password, domains — picks
+the compose overlay matching it, and runs `docker compose up -d --build`. From
+an existing checkout you can do the same by hand:
+
+```bash
+git pull && ./deploy/install.sh --update
+```
+
+If you'd rather manage compose yourself, pulling the published image works
+too:
 
 ```bash
 docker compose pull && docker compose up -d
@@ -14,6 +31,15 @@ docker compose pull && docker compose up -d
 On a production install, add the same overlay flag you installed with — e.g.
 `-f docker-compose.yml -f docker-compose.tls.yml` — so Traefik keeps its ACME
 configuration.
+
+<callout type="danger">
+  **Never reinstall over an existing install**
+
+  Don't delete `.env` and run a fresh install to "upgrade". A new
+  `CARGO_MASTER_KEY` makes every stored secret unreadable, and the existing
+  Postgres volume keeps its old password. `--update` and `--force` both keep
+  the existing secrets for exactly this reason.
+</callout>
 
 - **Migrations run automatically at startup** — no manual migration step
 - **Running user apps are not touched** — only the platform containers
@@ -42,3 +68,19 @@ configuration.
   **Admin → Instance settings → Who can sign up** and set it back to
   **Anyone**.
 </callout>
+
+## Notes for this release
+
+- **Migrations 00023–00025** add single-use GitHub setup links (and make an
+  installation belong to one organization only — if two orgs were bound to the
+  same installation, the earliest binding is kept), let worker hosts be deleted
+  once their apps have moved, and track apps waiting to be removed from a host
+  they moved off.
+- **GitHub ownership checks** are opt-in for existing GitHub Apps: add the
+  App's OAuth client ID and secret under **Admin → GitHub App** — see
+  [Administration](/docs/administration/#github-app).
+- **`CARGO_APPS_SUFFIX`** is now read by the control plane. It only seeds the
+  apps-domain setting when none is stored, so upgrading never changes a suffix
+  you set in the admin UI.
+- **Image apps pull on every deploy**, so a deploy now needs the registry to
+  be reachable.

@@ -12,7 +12,7 @@ three-container stack.
 ## Prerequisites
 
 - An Ubuntu/Debian Linux host with `sudo` access (the installer sets up Docker
-  Engine and the compose plugin)
+  Engine and the compose plugin), on **amd64 or arm64**
 - Ports **80** and **443** open
 - For a **production install**, DNS records pointing at the host:
   - `<platform-domain>` → server IP (where the Cargo UI lives, e.g. `cargo.example.com`)
@@ -31,6 +31,11 @@ The bootstrap installs any missing prerequisites, clones Cargo to `/opt/cargo`,
 then runs the deploy installer. Set `CARGO_INSTALL_DIR` to choose a different
 location. If you already have a Cargo checkout, run `./deploy/install.sh` from
 its root instead.
+
+Running the same command again on a server that already has Cargo is an
+**upgrade**, not a reinstall: the bootstrap pulls the latest checkout, sees
+the existing `deploy/.env`, and runs the installer with `--update` — your
+secrets and settings are kept. See [Upgrading](/docs/upgrading/).
 
 The installer runs four phases, in order:
 
@@ -74,7 +79,9 @@ primary IPv4 (falling back to `localhost`), defaults the apps suffix to
 `apps.localhost`, and skips Let's Encrypt entirely. No DNS records, no email,
 no certificates.
 
-Open `http://localhost` or `http://<server-ip>` and register. Apps are served
+Open `http://localhost` or `http://<server-ip>` and register. (If you write
+`.env` by hand and leave `CARGO_PLATFORM_DOMAIN` empty, the UI is served on
+`localhost` — an empty value never produces a dead route.) Apps are served
 at `https://<name>.apps.localhost` with Traefik's self-signed certificate —
 your browser will warn, which is expected.
 
@@ -90,7 +97,7 @@ With none of them set you get a local install.
 | Variable | Required | Purpose |
 |---|---|---|
 | `CARGO_PLATFORM_DOMAIN` | For a domain install | Where the Cargo UI lives, e.g. `cargo.example.com` |
-| `CARGO_APPS_SUFFIX` | For a domain install | Apps get `<name>.<suffix>`, e.g. `apps.example.com` |
+| `CARGO_APPS_SUFFIX` | For a domain install | Apps get `<name>.<suffix>`, e.g. `apps.example.com`. Applied on first boot; change it later under **Admin → Instance settings** |
 | `CARGO_ACME_EMAIL` | For a domain install | Let's Encrypt account email |
 | `CARGO_DNS_PROVIDER` | No | Traefik DNS provider name (e.g. `cloudflare`) for wildcard certs |
 
@@ -132,8 +139,15 @@ This widens *where* clones may go, never *which transports*.
 
 | Flag | Effect |
 |---|---|
-| `--force` | Overwrite an existing `.env` (this changes secrets!) |
-| `--no-up` | Write `.env` and stop — start later with `docker compose up -d` |
+| `--update` | Upgrade an existing install: keep `.env` exactly as it is, pick the compose files that match it, and run `docker compose up -d --build`. Fails if there is no `.env` yet |
+| `--force` | Re-run the setup prompts on an existing install and rewrite `.env` — **keeping** `CARGO_MASTER_KEY` and `CARGO_DB_PASSWORD` |
+| `--no-up` | Write `.env` (or, with `--update`, just print the command) and stop |
+
+Without a flag, the installer refuses to touch an existing `.env` and tells
+you to use `--update` or `--force`. Neither flag ever generates new secrets
+for an existing install: a new master key would make every stored secret
+unreadable, and Postgres ignores a new password on a data volume it has
+already initialised.
 
 ## Manual alternative
 
@@ -145,3 +159,8 @@ chmod 600 .env
 docker network create cargo-proxy   # shared app/proxy network, once per host
 docker compose up -d                # add your TLS overlay's -f flag for production
 ```
+
+The TLS and DNS-01 overlays refuse to start with an empty
+`CARGO_PLATFORM_DOMAIN` (`docker compose config` fails with
+`CARGO_PLATFORM_DOMAIN is required for TLS`), since there would be nothing
+to issue a certificate for.

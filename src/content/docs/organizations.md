@@ -19,10 +19,27 @@ UI.
 | **Member** | Create and deploy apps |
 | **Viewer** | Read-only view of apps, deployments, and domains |
 
-Two safety rules around ownership:
+Rules around roles and ownership:
 
-- Only the **owner** can delete an organization
-- The **last owner** can't be demoted or removed
+- **Nobody grants a role above their own** — by role change or by invite
+- **Only owners touch owners**: promoting someone to owner, changing an
+  owner's role, removing an owner, or inviting an owner all require the
+  owner role. An admin can't make themselves owner.
+- The **last owner** can't be demoted or removed, even when two owners act at
+  the same moment
+- Only an **owner** can delete an organization
+
+### Deleting an organization
+
+Deleting an org stops and removes every app's containers — on the control
+plane or whichever [worker host](/docs/deployments/#worker-hosts) runs them —
+before the org and its records are gone, so nothing keeps serving its
+domains. Two cases are refused:
+
+- The org still has **managed databases** — `409 has_databases`. Delete them
+  first; their data isn't removed implicitly.
+- A worker host running one of its apps can't be reached — `502
+  host_unavailable`, naming the app. Nothing is deleted, so you can retry.
 
 ## Invites
 
@@ -43,7 +60,8 @@ Either way:
 - Accepting a valid invite adds membership with the invite's role;
   re-accepting is a no-op
 - Revoked, expired, or bogus tokens are rejected
-- Only owner/admin can create, list, and revoke invites
+- Only owner/admin can create, list, and revoke invites, and only an owner
+  can invite someone as owner
 
 ### Accepting an invite
 
@@ -62,7 +80,9 @@ than leaking anything about the org.
 ## Audit log
 
 Org owners and admins can review every state-changing action taken in their
-organization — who did what, to which resource, and when. Entries are
+organization — who did what, to which resource, and when. That includes
+actions on its apps, deployments, and databases (deploys, env changes,
+attaches, deletes), which are attributed to the org that owns them. Entries are
 append-only and retained for 180 days by default. See
 [Operations & Hardening](/docs/operations/).
 

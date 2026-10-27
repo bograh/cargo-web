@@ -75,9 +75,15 @@ rollback targets.
 ## Logs
 
 Build and deploy logs **stream live over SSE** and are **persisted per
-deployment**, so you can inspect a failed deploy after the fact. The **five
-most recent deployments per app** are retained; older rows, log files, and
-images are reclaimed.
+deployment**, so you can inspect a failed deploy after the fact. Opening a
+deployment replays its log from the start, then follows it; every line is
+sent exactly once. The stream closes itself with a final status line once the
+deployment reaches a terminal state — `live`, `failed`, `cancelled`, or
+`superseded`. If the connection drops (a network blip, or the session
+needing a refresh), the UI refreshes the session and reconnects.
+
+Logs are kept alongside their deployment rows — see
+[Image retention](#image-retention) for which ones are reclaimed.
 
 For the running app's own output, see the app's Logs tab —
 [Metrics & Logs](/docs/metrics-logs/).
@@ -85,13 +91,19 @@ For the running app's own output, see the app's Logs tab —
 ## Safety properties
 
 - **Builds are concurrency-capped** (default 2 at a time)
-- **Deploys are serialized per app** — no two deploys of the same app race
+- **Deploys are serialized per app** — no two deploys of the same app race.
+  A deploy that finds its app busy doesn't hold a worker while it waits: it
+  is rescheduled every 10 seconds until the app is free, so other apps'
+  deploys keep moving
 - **A failed build never affects the currently running app**
 - Under blue/green, **a failed deploy never affects it either** — the new
   version is discarded and the old one keeps serving
 - Deploy jobs get a **30-minute timeout**, comfortably covering a cold build
-  plus the health gate, and a failure is persisted even if the job's context
-  was cancelled
+  plus the health gate. A failure is persisted even if the job's context was
+  cancelled, and a deploy that has gone live is recorded `live` even if the
+  timeout lands a moment later
+- A deploy that can't start at all (its log can't be opened, or its last
+  retry fails) is marked `failed` rather than left `queued`
 - On startup, any deployment stuck in a non-terminal state for over 15
   minutes — the residue of a crash or restart mid-deploy — is failed with a
   clear reason; more recent ones are resumed by the job queue
@@ -100,12 +112,22 @@ For the running app's own output, see the app's Logs tab —
 
 ## Image retention
 
-After each deploy — and again daily — Cargo prunes anything outside the
-newest five deployments per app, so build images don't accumulate on disk.
-Rollback targets within that window always have their image available. An image
-is never removed while something still runs it — that covers a rollback (whose
-image belongs to an older deployment row) and a blue/green hand-off (where two
-colors run different images at once). The
+After each deploy — and again daily — Cargo prunes each app's history. Only
+**finished, non-serving** deployments (`failed`, `cancelled`, `superseded`)
+outside the **newest five** are removed, along with their log files and
+images. The `live` deployment and anything still `queued`, `building`, or
+`deploying` are never pruned, however many newer deployments there are — so a
+burst of failed deploys can't take out the rollback target.
+
+Only images Cargo built itself (`app-<slug>:<id>`) are deleted. A registry
+image such as `redis:7` is left alone, since other apps or managed databases
+may use the same tag. An image is never removed while something still runs
+it — that covers a rollback (whose image belongs to an older deployment row)
+and a blue/green hand-off (where two colors run different images at once).
+
+Apps on a [worker host](#worker-hosts) have their images removed on that
+host. If the host is unreachable, the daily prune skips the app and keeps its
+rows, so a later run can finish the job. The
 [disk guardrail](/docs/operations/) reclaims dangling images if space gets
 tight anyway.
 
@@ -158,6 +180,11 @@ and the switch needs no proxy reconfiguration. Only one color survives a success
 old one serving. The deployment ends `failed` — there is nothing to roll back,
 because the running app was never replaced.
 
+If Cargo can't read which color is live (a database error), the deploy is
+aborted rather than guessed — it never risks replacing the serving color. And
+if the new color is healthy but can't be recorded as live, it is torn down
+and the old one keeps serving.
+
 The very first blue/green deploy of an app that predates this feature is a
 one-time exception: the old container is retired before the first color starts,
 so that deploy has the same brief gap as `recreate`. Every deploy after it is a
@@ -208,10 +235,58 @@ A failed deploy alerts the org's owners and admins — see
 
 Apps can be deployed to remote machines registered as worker hosts under
 **Admin → Worker hosts**. Each worker runs its own Traefik/proxy stack and
-is reachable over SSH. Blue/green deploys work identically on workers.
+is reachable over SSH. Pick the host when creating an app (**Worker host**;
+blank = this machine). Blue/green deploys work identically on workers.
+
+- **Builds run on the control plane.** A git or Nixpacks build happens
+  locally, then the image is streamed to the worker (`docker save | docker
+  load` over SSH). It's skipped when the worker already has the image, as on
+  a rollback to a version that ran there. Registry images are pulled on the
+  worker directly.
+- **SSH uses the host's own key and pinned host key.** Every docker call to a
+  worker goes through a per-host `ssh` configuration Cargo materializes under
+  `<dataDir>/hosts/`, so key auth and host-key pinning apply as registered.
+- **Everything follows the app**: stop, start, delete, runtime logs, and image
+  pruning act on the worker, not the control plane.
+- **Capacity** shown for a host (CPUs, memory) comes from the worker's own
+  Docker daemon.
+- A host can be deleted once no apps are assigned to it (`409 host_in_use`
+  otherwise), even if it ran deployments in the past — those keep their
+  history with the host cleared.
+
+### Moving an app between hosts
+
+Change an app's host through the API (`PATCH /api/v1/apps/{id}` with
+`host_id`; an empty string moves it back to the control plane). Cargo
+remembers where the app used to run and:
+
+- **Live app:** queues a redeploy on the new host, returned as
+  `move_deployment_id`. It re-applies the live image (a rollback, no rebuild);
+  compose apps get a normal deploy. The old containers are stopped **only
+  after** the new deployment is live, so the app keeps serving through the
+  move.
+- **Stopped or never-deployed app:** nothing is started; the old containers
+  (if any) are removed straight away.
+
+If removing the old copy fails, the deploy still succeeds: the failure is
+written to the deploy log and audited as `app.retire_failed`, and the next
+deploy tries again. Moving back to a host that was waiting for clean-up
+cancels it, and an app moved twice in quick succession is cleaned up on both
+old hosts. Named volumes on the old host are kept.
+
+<div class="callout callout--warning">
+  <span class="callout__title">Delete hosts after their apps have moved off</span>
+  <p>If you delete a worker host while an app is still waiting to be removed
+  from it, Cargo forgets that clean-up — and those containers keep running on
+  the old machine. Let the move's deploy go live (or check the deploy log for
+  a retire failure) before deleting the host, or stop the containers on it
+  yourself.</p>
+</div>
 
 ## SSE stream limits
 
 Live log streams are capped per-user (8) and per-instance (64). Access is
 revalidated every minute — revoked or expired sessions drop their streams
-immediately.
+within a minute. The UI refreshes the session and reopens a dropped stream on
+its own, so a long-running build log or metrics tab survives the 15-minute
+access-token expiry.

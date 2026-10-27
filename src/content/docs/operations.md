@@ -85,7 +85,12 @@ docker compose up -d controlplane
 
 Rotation is **all-or-nothing**: it runs in one transaction and verifies each
 re-sealed value before storing it, so a failure part-way through leaves
-everything readable with the old key. Re-running a completed rotation is a
+everything readable with the old key. It also takes exclusive locks on every
+table holding a sealed value for the whole run, so nothing can write a secret
+between reading and committing. If a still-running control plane holds those
+tables, rotation gives up after 10 seconds with *"is the control plane still
+running? stop it first"* — step 3 is not optional. (A server left running
+after a rotation would keep sealing new secrets with the old key.) Re-running a completed rotation is a
 safe no-op, and supplying the wrong current key aborts before writing anything.
 
 <div class="callout callout--warning">
@@ -142,7 +147,13 @@ append-only: who, what, when, and the target. Reads and failed requests are
 not recorded.
 
 - **Admin → Audit log** shows the whole instance
-- Org owners and admins see their own org's entries
+- Org owners and admins see their own org's entries, including actions on
+  the org's apps, deployments, and databases, which are attributed to it
+  even though their URLs don't name the org
+- Deleting an organization is recorded at instance level, with the deleted
+  org's ID in the entry's detail
+- Moving an app off a host that couldn't be cleaned up is recorded as
+  `app.retire_failed`
 
 Entries are retained `CARGO_AUDIT_RETENTION_DAYS` days (default **180**) and
 trimmed by the housekeeping job. Audit writes are best-effort and never block
@@ -177,7 +188,8 @@ git servers on a private network opt back in with
 Streaming endpoints (live deploy logs, metrics, instance monitoring) are
 capped at **8 concurrent streams per user** and **64 per instance**. Access
 is revalidated every minute, so a revoked or expired session drops its
-streams even while they're open.
+streams even while they're open. Deployment log streams close themselves
+when the deployment finishes, so a forgotten tab doesn't hold a slot.
 
 ## API hardening
 
@@ -212,9 +224,9 @@ gauges.
 | Job | Interval | What it does |
 |---|---|---|
 | Metrics collection | 15s | Samples running apps ([Metrics & Logs](/docs/metrics-logs/)) |
-| Domain check | 10 min | Refreshes DNS/HTTPS status of custom domains |
+| Domain check | 10 min | Refreshes DNS/HTTPS status of custom domains (8 in parallel, 15s each, public addresses only — [Domains & SSL](/docs/domains-ssl/)) |
 | Disk check | 10 min | Free-space guardrail |
-| Prune | 24h (and after each deploy) | Keeps the newest 5 deployments per app; removes older rows, logs, and images |
+| Prune | 24h (and after each deploy) | Removes finished, non-live deployments outside the newest 5 per app — rows, logs, and Cargo-built images, on the host that holds them ([Image retention](/docs/deployments/#image-retention)) |
 | Housekeeping | 24h | Purges expired sessions and invites, metrics >48h, audit entries past retention |
 | Platform backup | 24h | Control-plane dump + certificates |
 

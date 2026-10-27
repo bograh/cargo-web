@@ -25,8 +25,8 @@ A commented `deploy/.env.example` ships with the repo.
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `CARGO_PLATFORM_DOMAIN` | — | Where the Cargo UI is served. Empty for a [local install](/docs/installation/). |
-| `CARGO_APPS_SUFFIX` | `apps.localhost` | Apps are served at `<name>.<suffix>` |
+| `CARGO_PLATFORM_DOMAIN` | `localhost` | Where the Cargo UI is served. Empty for a [local install](/docs/installation/) (served on `localhost`); required by the TLS and DNS-01 overlays, which refuse to start without it. |
+| `CARGO_APPS_SUFFIX` | `apps.localhost` | Apps are served at `<name>.<suffix>`. Seeds the apps-domain setting on first boot only — once a suffix is stored, **Admin → Instance settings** is the source of truth and this value is ignored. |
 | `CARGO_ACME_EMAIL` | — | Let's Encrypt account email. Required with a TLS overlay. |
 | `CARGO_DNS_PROVIDER` | — | Traefik DNS provider name for wildcard DNS-01 (e.g. `cloudflare`). Provider credentials (e.g. `CF_DNS_API_TOKEN`) go in `.env` too. |
 
